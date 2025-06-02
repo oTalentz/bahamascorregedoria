@@ -2,7 +2,7 @@
 import React from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, User, Shield, AlertTriangle, FileText } from 'lucide-react';
+import { Calendar, User, Shield, AlertTriangle, FileText, UserCheck } from 'lucide-react';
 
 interface Infraction {
   id: string;
@@ -13,6 +13,7 @@ interface Infraction {
   evidence: string;
   date: string;
   severity: 'Leve' | 'Média' | 'Grave';
+  registeredBy: string;
 }
 
 interface InfractionTableProps {
@@ -111,6 +112,12 @@ const InfractionTable: React.FC<InfractionTableProps> = ({ infractions }) => {
                 <th className="text-left p-4 text-blue-200 font-medium">Evidências</th>
                 <th className="text-left p-4 text-blue-200 font-medium">
                   <div className="flex items-center space-x-2">
+                    <UserCheck className="h-4 w-4" />
+                    <span>Registrado Por</span>
+                  </div>
+                </th>
+                <th className="text-left p-4 text-blue-200 font-medium">
+                  <div className="flex items-center space-x-2">
                     <Calendar className="h-4 w-4" />
                     <span>Data</span>
                   </div>
@@ -156,6 +163,11 @@ const InfractionTable: React.FC<InfractionTableProps> = ({ infractions }) => {
                   </td>
                   <td className="p-4">
                     <span className="text-blue-300 text-sm">
+                      {infraction.registeredBy}
+                    </span>
+                  </td>
+                  <td className="p-4">
+                    <span className="text-blue-300 text-sm">
                       {infraction.date}
                     </span>
                   </td>
@@ -168,7 +180,9 @@ const InfractionTable: React.FC<InfractionTableProps> = ({ infractions }) => {
                         {getInfractionCount(infraction.officerId)}
                       </Badge>
                       {getInfractionCount(infraction.officerId) >= 3 && (
-                        <AlertTriangle className="h-4 w-4 text-red-400" title="Policial com múltiplas infrações" />
+                        <div title="Policial com múltiplas infrações">
+                          <AlertTriangle className="h-4 w-4 text-red-400" />
+                        </div>
                       )}
                     </div>
                   </td>

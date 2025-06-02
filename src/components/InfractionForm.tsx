@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { X, Shield, User, FileText, AlertTriangle } from 'lucide-react';
+import { X, Shield, User, FileText, AlertTriangle, UserCheck } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,7 @@ interface InfractionFormProps {
     punishmentType: string;
     evidence: string;
     severity: 'Leve' | 'Média' | 'Grave';
+    registeredBy: string;
   }) => void;
   onCancel: () => void;
 }
@@ -27,7 +28,8 @@ const InfractionForm: React.FC<InfractionFormProps> = ({ onSubmit, onCancel }) =
     officerName: '',
     punishmentType: '',
     evidence: '',
-    severity: 'Leve' as 'Leve' | 'Média' | 'Grave'
+    severity: 'Leve' as 'Leve' | 'Média' | 'Grave',
+    registeredBy: ''
   });
 
   const garrisons = [
@@ -47,7 +49,7 @@ const InfractionForm: React.FC<InfractionFormProps> = ({ onSubmit, onCancel }) =
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.garrison && formData.officerId && formData.officerName && formData.punishmentType && formData.evidence) {
+    if (formData.garrison && formData.officerId && formData.officerName && formData.punishmentType && formData.evidence && formData.registeredBy) {
       onSubmit(formData);
       setFormData({
         garrison: '',
@@ -55,7 +57,8 @@ const InfractionForm: React.FC<InfractionFormProps> = ({ onSubmit, onCancel }) =
         officerName: '',
         punishmentType: '',
         evidence: '',
-        severity: 'Leve'
+        severity: 'Leve',
+        registeredBy: ''
       });
     }
   };
@@ -129,6 +132,22 @@ const InfractionForm: React.FC<InfractionFormProps> = ({ onSubmit, onCancel }) =
             value={formData.officerName}
             onChange={(e) => setFormData({...formData, officerName: e.target.value})}
             placeholder="Ex: João Silva"
+            className="bg-slate-700/50 border-blue-600/30 text-white placeholder-blue-300 focus:border-amber-400 focus:ring-amber-400/30"
+            required
+          />
+        </div>
+
+        {/* Registrado Por */}
+        <div className="space-y-2">
+          <Label htmlFor="registeredBy" className="text-blue-200 font-medium flex items-center space-x-2">
+            <UserCheck className="h-4 w-4 text-amber-400" />
+            <span>Registrado Por</span>
+          </Label>
+          <Input
+            id="registeredBy"
+            value={formData.registeredBy}
+            onChange={(e) => setFormData({...formData, registeredBy: e.target.value})}
+            placeholder="Ex: Inspetor Maria Santos"
             className="bg-slate-700/50 border-blue-600/30 text-white placeholder-blue-300 focus:border-amber-400 focus:ring-amber-400/30"
             required
           />

@@ -18,6 +18,7 @@ export interface Infraction {
   evidence: string;
   date: string;
   severity: 'Leve' | 'Média' | 'Grave';
+  registeredBy: string;
 }
 
 const Index = () => {
@@ -58,7 +59,8 @@ const Index = () => {
     infraction.officerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     infraction.officerId.includes(searchTerm) ||
     infraction.garrison.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    infraction.punishmentType.toLowerCase().includes(searchTerm.toLowerCase())
+    infraction.punishmentType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    infraction.registeredBy.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Estatísticas
@@ -151,7 +153,7 @@ const Index = () => {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-300 h-5 w-5" />
               <Input
-                placeholder="Pesquisar por nome, ID, guarnição ou tipo de punição..."
+                placeholder="Pesquisar por nome, ID, guarnição, tipo de punição ou registrado por..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 bg-slate-700/50 border-blue-600/30 text-white placeholder-blue-300 focus:border-amber-400 focus:ring-amber-400/30"
