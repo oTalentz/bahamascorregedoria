@@ -98,10 +98,10 @@ const OfficersTable: React.FC<OfficersTableProps> = ({ infractions, onFilterByOf
 
   if (officerStats.length === 0) {
     return (
-      <Card className="bg-gradient-to-br from-blue-800/30 to-slate-800/30 border-blue-700/30 backdrop-blur-sm">
+      <Card className="bg-gradient-to-br from-blue-800/80 to-slate-800/80 border-blue-700/70 backdrop-blur-sm shadow-2xl">
         <CardContent className="p-12 text-center">
           <div className="flex flex-col items-center space-y-4">
-            <div className="bg-blue-700/30 p-4 rounded-full">
+            <div className="bg-blue-700/50 p-4 rounded-full">
               <User className="h-12 w-12 text-blue-300" />
             </div>
             <h3 className="text-xl font-semibold text-white">
@@ -117,10 +117,10 @@ const OfficersTable: React.FC<OfficersTableProps> = ({ infractions, onFilterByOf
   }
 
   return (
-    <Card className="bg-gradient-to-br from-blue-800/30 to-slate-800/30 border-blue-700/30 backdrop-blur-sm">
+    <Card className="bg-gradient-to-br from-blue-800/80 to-slate-800/80 border-blue-700/70 backdrop-blur-sm shadow-2xl">
       <CardContent className="p-0">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-900/50 to-slate-900/50 p-4 border-b border-blue-700/30">
+        <div className="bg-gradient-to-r from-blue-900/80 to-slate-900/80 p-4 border-b border-blue-700/50">
           <div className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
             <h3 className="text-lg font-semibold text-white flex items-center space-x-2">
               <User className="h-5 w-5 text-amber-400" />
@@ -138,7 +138,7 @@ const OfficersTable: React.FC<OfficersTableProps> = ({ infractions, onFilterByOf
                   placeholder="Buscar policial..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-slate-700/50 border-blue-600/30 text-white placeholder-blue-300 focus:border-amber-400 w-64"
+                  className="pl-10 bg-slate-700/70 border-blue-600/50 text-white placeholder-blue-300 focus:border-amber-400 w-64"
                 />
               </div>
               
@@ -179,7 +179,7 @@ const OfficersTable: React.FC<OfficersTableProps> = ({ infractions, onFilterByOf
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-slate-800/50 border-b border-blue-700/30">
+              <tr className="bg-slate-800/70 border-b border-blue-700/50">
                 <th className="text-left p-4 text-blue-200 font-medium">
                   <div className="flex items-center space-x-2">
                     <User className="h-4 w-4" />
@@ -197,7 +197,7 @@ const OfficersTable: React.FC<OfficersTableProps> = ({ infractions, onFilterByOf
               {filteredOfficers.map((officer, index) => (
                 <tr 
                   key={officer.name}
-                  className="border-b border-blue-700/20 hover:bg-blue-900/20 transition-colors duration-200"
+                  className="border-b border-blue-700/30 hover:bg-blue-900/30 transition-colors duration-200"
                 >
                   <td className="p-4">
                     <span className="text-white font-medium">
@@ -247,7 +247,7 @@ const OfficersTable: React.FC<OfficersTableProps> = ({ infractions, onFilterByOf
         </div>
 
         {/* Rodapé com estatísticas */}
-        <div className="p-4 bg-slate-800/30 border-t border-blue-700/30">
+        <div className="p-4 bg-slate-800/50 border-t border-blue-700/50">
           <div className="flex flex-wrap items-center justify-between text-sm text-blue-300">
             <span>
               Total de {filteredOfficers.length} policiais aplicadores encontrados

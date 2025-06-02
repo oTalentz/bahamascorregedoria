@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -57,10 +56,10 @@ const InfractionTable: React.FC<InfractionTableProps> = ({ infractions }) => {
 
   if (infractions.length === 0) {
     return (
-      <Card className="bg-gradient-to-br from-blue-800/30 to-slate-800/30 border-blue-700/30 backdrop-blur-sm">
+      <Card className="bg-gradient-to-br from-blue-800/80 to-slate-800/80 border-blue-700/70 backdrop-blur-sm shadow-2xl">
         <CardContent className="p-12 text-center">
           <div className="flex flex-col items-center space-y-4">
-            <div className="bg-blue-700/30 p-4 rounded-full">
+            <div className="bg-blue-700/50 p-4 rounded-full">
               <FileText className="h-12 w-12 text-blue-300" />
             </div>
             <h3 className="text-xl font-semibold text-white">
@@ -76,10 +75,10 @@ const InfractionTable: React.FC<InfractionTableProps> = ({ infractions }) => {
   }
 
   return (
-    <Card className="bg-gradient-to-br from-blue-800/30 to-slate-800/30 border-blue-700/30 backdrop-blur-sm">
+    <Card className="bg-gradient-to-br from-blue-800/80 to-slate-800/80 border-blue-700/70 backdrop-blur-sm shadow-2xl">
       <CardContent className="p-0">
         {/* Header da Tabela */}
-        <div className="bg-gradient-to-r from-blue-900/50 to-slate-900/50 p-4 border-b border-blue-700/30">
+        <div className="bg-gradient-to-r from-blue-900/80 to-slate-900/80 p-4 border-b border-blue-700/50">
           <h3 className="text-lg font-semibold text-white flex items-center space-x-2">
             <AlertTriangle className="h-5 w-5 text-amber-400" />
             <span>Registro de Infrações</span>
@@ -93,7 +92,7 @@ const InfractionTable: React.FC<InfractionTableProps> = ({ infractions }) => {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-slate-800/50 border-b border-blue-700/30">
+              <tr className="bg-slate-800/70 border-b border-blue-700/50">
                 <th className="text-left p-4 text-blue-200 font-medium">
                   <div className="flex items-center space-x-2">
                     <Shield className="h-4 w-4" />
@@ -129,7 +128,7 @@ const InfractionTable: React.FC<InfractionTableProps> = ({ infractions }) => {
               {infractions.map((infraction, index) => (
                 <tr 
                   key={infraction.id}
-                  className="border-b border-blue-700/20 hover:bg-blue-900/20 transition-colors duration-200"
+                  className="border-b border-blue-700/30 hover:bg-blue-900/30 transition-colors duration-200"
                 >
                   <td className="p-4">
                     <Badge className={getGarrisonColor(infraction.garrison)}>
@@ -137,7 +136,7 @@ const InfractionTable: React.FC<InfractionTableProps> = ({ infractions }) => {
                     </Badge>
                   </td>
                   <td className="p-4">
-                    <span className="text-white font-mono text-sm bg-slate-700/50 px-2 py-1 rounded">
+                    <span className="text-white font-mono text-sm bg-slate-700/70 px-2 py-1 rounded">
                       {infraction.officerId}
                     </span>
                   </td>
@@ -193,7 +192,7 @@ const InfractionTable: React.FC<InfractionTableProps> = ({ infractions }) => {
         </div>
 
         {/* Legenda */}
-        <div className="p-4 bg-slate-800/30 border-t border-blue-700/30">
+        <div className="p-4 bg-slate-800/50 border-t border-blue-700/50">
           <div className="flex flex-wrap items-center justify-between text-sm">
             <div className="flex items-center space-x-4 text-blue-300">
               <span>Legenda de Gravidade:</span>
