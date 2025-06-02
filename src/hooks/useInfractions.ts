@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { SupabaseService } from '@/services/supabaseService';
@@ -12,7 +11,7 @@ export const useInfractions = () => {
   const [localInfractions, setLocalInfractions] = useState<Infraction[]>([]);
 
   // Verificar se Supabase está configurado
-  const isSupabaseConfigured = SupabaseService.isConfigured();
+  const isSupabaseConfigured = Boolean(SupabaseService.isConfigured());
 
   // Query para buscar infrações (apenas se Supabase estiver configurado)
   const {
@@ -22,14 +21,14 @@ export const useInfractions = () => {
   } = useQuery({
     queryKey: ['infractions'],
     queryFn: SupabaseService.getInfractions,
-    enabled: isSupabaseConfigured,
+    enabled: Boolean(isSupabaseConfigured),
   });
 
   // Query para buscar guarnições (apenas se Supabase estiver configurado)
   const { data: garrisons = [] } = useQuery({
     queryKey: ['garrisons'],
     queryFn: SupabaseService.getGarrisons,
-    enabled: isSupabaseConfigured,
+    enabled: Boolean(isSupabaseConfigured),
   });
 
   // Carregar dados do localStorage se Supabase não estiver configurado

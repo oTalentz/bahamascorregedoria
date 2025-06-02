@@ -7,7 +7,7 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 // Verificar se as variáveis estão configuradas
-const isSupabaseConfigured = supabaseUrl && supabaseKey;
+const isSupabaseConfigured = Boolean(supabaseUrl && supabaseKey);
 
 // Criar cliente apenas se configurado
 export const supabase = isSupabaseConfigured 
@@ -147,6 +147,6 @@ export class SupabaseService {
 
   // Verificar se está configurado (método público)
   static isConfigured(): boolean {
-    return isSupabaseConfigured;
+    return Boolean(isSupabaseConfigured);
   }
 }
