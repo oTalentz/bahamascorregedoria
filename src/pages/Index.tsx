@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { Search, Plus, Shield, AlertTriangle, FileText, Calendar, User, Users } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import InfractionForm from '@/components/InfractionForm';
 import InfractionTable from '@/components/InfractionTable';
 import OfficersTable from '@/components/OfficersTable';
+import { useInfractions } from '@/hooks/useInfractions';
 import { toast } from "@/hooks/use-toast";
 
 export interface Infraction {
@@ -23,40 +25,15 @@ export interface Infraction {
 }
 
 const Index = () => {
-  const [infractions, setInfractions] = useState<Infraction[]>([]);
+  const { infractions, isLoading, error, addInfraction, isCreating } = useInfractions();
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('infractions');
   const [officerFilter, setOfficerFilter] = useState('');
 
-  // Carregar dados do localStorage na inicialização
-  useEffect(() => {
-    const savedInfractions = localStorage.getItem('policeInfractions');
-    if (savedInfractions) {
-      setInfractions(JSON.parse(savedInfractions));
-    }
-  }, []);
-
-  // Salvar dados no localStorage sempre que infrações mudarem
-  useEffect(() => {
-    localStorage.setItem('policeInfractions', JSON.stringify(infractions));
-  }, [infractions]);
-
-  const addInfraction = (infraction: Omit<Infraction, 'id' | 'date'>) => {
-    const newInfraction: Infraction = {
-      ...infraction,
-      id: Date.now().toString(),
-      date: new Date().toLocaleDateString('pt-BR')
-    };
-    
-    // Ordenar por data (mais recentes primeiro)
-    setInfractions(prev => [newInfraction, ...prev]);
+  const handleAddInfraction = (infraction: Omit<Infraction, 'id' | 'date'>) => {
+    addInfraction(infraction);
     setShowForm(false);
-    
-    toast({
-      title: "Infração registrada",
-      description: `Infração de ${infraction.officerName} foi registrada com sucesso.`,
-    });
   };
 
   // Filtrar infrações
@@ -95,9 +72,36 @@ const Index = () => {
   // Estatísticas
   const totalInfractions = infractions.length;
   const graveInfractions = infractions.filter(i => i.severity === 'Grave').length;
-
-  // Estatísticas dos policiais aplicadores
   const uniqueOfficers = new Set(infractions.map(i => i.registeredBy)).size;
+
+  // Mostrar loading
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-400 mx-auto"></div>
+          <p className="text-white mt-4 text-lg">Carregando dados do banco...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Mostrar erro
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex items-center justify-center">
+        <Card className="bg-red-800/80 border-red-600/70">
+          <CardContent className="p-8 text-center">
+            <AlertTriangle className="h-16 w-16 text-red-300 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-white mb-2">Erro de Conexão</h2>
+            <p className="text-red-200">
+              Erro ao conectar com o banco de dados. Verifique a configuração do Supabase.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
@@ -120,10 +124,11 @@ const Index = () => {
             </div>
             <Button 
               onClick={() => setShowForm(true)}
+              disabled={isCreating}
               className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-blue-900 font-semibold shadow-lg transition-all duration-300 transform hover:scale-105 px-6 py-3"
             >
               <Plus className="h-6 w-6 mr-2" />
-              Nova Infração
+              {isCreating ? 'Salvando...' : 'Nova Infração'}
             </Button>
           </div>
         </div>
@@ -250,7 +255,7 @@ const Index = () => {
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-6 z-50">
             <div className="bg-gradient-to-br from-slate-800/95 to-blue-900/95 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-blue-700/40">
               <InfractionForm 
-                onSubmit={addInfraction} 
+                onSubmit={handleAddInfraction} 
                 onCancel={() => setShowForm(false)} 
               />
             </div>
