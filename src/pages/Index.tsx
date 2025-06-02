@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Search, Plus, Shield, AlertTriangle, FileText, Calendar, User, Users } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -25,7 +24,15 @@ export interface Infraction {
 }
 
 const Index = () => {
-  const { infractions, isLoading, error, addInfraction, isCreating } = useInfractions();
+  const { 
+    infractions, 
+    isLoading, 
+    error, 
+    addInfraction, 
+    isCreating, 
+    isUsingLocalStorage, 
+    isSupabaseConfigured 
+  } = useInfractions();
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('infractions');
@@ -105,6 +112,17 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
+      {/* Aviso sobre configuração do Supabase */}
+      {!isSupabaseConfigured && (
+        <div className="bg-gradient-to-r from-amber-600 to-orange-600 text-white p-4 text-center shadow-lg">
+          <div className="container mx-auto">
+            <p className="font-semibold">
+              ⚠️ Usando armazenamento local. Para persistência completa, configure o Supabase clicando no botão verde no topo direito.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-950 to-slate-900 shadow-2xl border-b border-blue-800/30">
         <div className="container mx-auto px-8 py-10">
@@ -119,6 +137,11 @@ const Index = () => {
                 </h1>
                 <p className="text-blue-200 mt-2 text-lg">
                   Sistema de Acompanhamento de Infrações - Polícia das Bahamas
+                  {isUsingLocalStorage && (
+                    <span className="block text-amber-200 text-sm mt-1">
+                      (Modo Local - Configure Supabase para banco de dados)
+                    </span>
+                  )}
                 </p>
               </div>
             </div>

@@ -2,20 +2,31 @@
 import { createClient } from '@supabase/supabase-js';
 import { DatabaseInfraction, CreateInfractionData, Garrison } from '@/types/database';
 
-// Configuração do Supabase
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Configuração do Supabase com fallbacks
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Variáveis de ambiente do Supabase não configuradas');
-}
+// Verificar se as variáveis estão configuradas
+const isSupabaseConfigured = supabaseUrl && supabaseKey;
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+// Criar cliente apenas se configurado
+export const supabase = isSupabaseConfigured 
+  ? createClient(supabaseUrl, supabaseKey)
+  : null;
 
 export class SupabaseService {
+  // Verificar se Supabase está configurado
+  private static checkConfiguration() {
+    if (!isSupabaseConfigured || !supabase) {
+      throw new Error('Supabase não configurado. Configure as variáveis VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY');
+    }
+  }
+
   // Buscar todas as infrações com dados da guarnição
   static async getInfractions(): Promise<DatabaseInfraction[]> {
-    const { data, error } = await supabase
+    this.checkConfiguration();
+    
+    const { data, error } = await supabase!
       .from('infractions')
       .select(`
         *,
@@ -37,7 +48,9 @@ export class SupabaseService {
 
   // Criar nova infração
   static async createInfraction(infractionData: CreateInfractionData): Promise<DatabaseInfraction> {
-    const { data, error } = await supabase
+    this.checkConfiguration();
+    
+    const { data, error } = await supabase!
       .from('infractions')
       .insert([infractionData])
       .select(`
@@ -60,7 +73,9 @@ export class SupabaseService {
 
   // Buscar todas as guarnições
   static async getGarrisons(): Promise<Garrison[]> {
-    const { data, error } = await supabase
+    this.checkConfiguration();
+    
+    const { data, error } = await supabase!
       .from('garrisons')
       .select('*')
       .order('name');
@@ -75,10 +90,12 @@ export class SupabaseService {
 
   // Criar guarnições iniciais se não existirem
   static async initializeGarrisons(): Promise<void> {
+    this.checkConfiguration();
+    
     const garrisons = ['CORE', 'BOPE', 'COE', 'GATE', 'PRF', 'CIVIL', 'ROTAM', 'CHOQUE'];
     
     for (const garrison of garrisons) {
-      const { error } = await supabase
+      const { error } = await supabase!
         .from('garrisons')
         .upsert({ name: garrison }, { onConflict: 'name' });
       
@@ -90,6 +107,8 @@ export class SupabaseService {
 
   // Migrar dados do localStorage para Supabase
   static async migrateLocalStorageData(): Promise<void> {
+    this.checkConfiguration();
+    
     const localData = localStorage.getItem('policeInfractions');
     if (!localData) return;
 
@@ -124,5 +143,10 @@ export class SupabaseService {
     } catch (error) {
       console.error('Erro na migração:', error);
     }
+  }
+
+  // Verificar se está configurado (método público)
+  static isConfigured(): boolean {
+    return isSupabaseConfigured;
   }
 }
