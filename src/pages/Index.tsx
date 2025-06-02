@@ -1,12 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Shield, AlertTriangle, FileText, Calendar, User } from 'lucide-react';
+import { Search, Plus, Shield, AlertTriangle, FileText, Calendar, User, Users } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import InfractionForm from '@/components/InfractionForm';
 import InfractionTable from '@/components/InfractionTable';
+import OfficersTable from '@/components/OfficersTable';
 import { toast } from "@/hooks/use-toast";
 
 export interface Infraction {
@@ -25,6 +26,8 @@ const Index = () => {
   const [infractions, setInfractions] = useState<Infraction[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('infractions');
+  const [officerFilter, setOfficerFilter] = useState('');
 
   // Carregar dados do localStorage na inicialização
   useEffect(() => {
@@ -46,6 +49,7 @@ const Index = () => {
       date: new Date().toLocaleDateString('pt-BR')
     };
     
+    // Ordenar por data (mais recentes primeiro)
     setInfractions(prev => [newInfraction, ...prev]);
     setShowForm(false);
     
@@ -55,18 +59,45 @@ const Index = () => {
     });
   };
 
-  const filteredInfractions = infractions.filter(infraction =>
-    infraction.officerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    infraction.officerId.includes(searchTerm) ||
-    infraction.garrison.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    infraction.punishmentType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    infraction.registeredBy.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filtrar infrações
+  const filteredInfractions = infractions.filter(infraction => {
+    const matchesSearch = (
+      infraction.officerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      infraction.officerId.includes(searchTerm) ||
+      infraction.garrison.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      infraction.punishmentType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      infraction.registeredBy.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    const matchesOfficerFilter = officerFilter === '' || 
+      infraction.registeredBy.toLowerCase().includes(officerFilter.toLowerCase());
+    
+    return matchesSearch && matchesOfficerFilter;
+  });
+
+  // Função para filtrar por policial aplicador
+  const handleFilterByOfficer = (officerName: string) => {
+    setOfficerFilter(officerName);
+    setActiveTab('infractions');
+    setSearchTerm('');
+    toast({
+      title: "Filtro aplicado",
+      description: `Mostrando infrações aplicadas por ${officerName}`,
+    });
+  };
+
+  // Função para limpar filtros
+  const clearFilters = () => {
+    setOfficerFilter('');
+    setSearchTerm('');
+  };
 
   // Estatísticas
   const totalInfractions = infractions.length;
-  const uniqueOfficers = new Set(infractions.map(i => i.officerId)).size;
   const graveInfractions = infractions.filter(i => i.severity === 'Grave').length;
+
+  // Estatísticas dos policiais aplicadores
+  const uniqueOfficers = new Set(infractions.map(i => i.registeredBy)).size;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
@@ -99,8 +130,8 @@ const Index = () => {
       </div>
 
       <div className="container mx-auto px-6 py-8">
-        {/* Estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Estatísticas Atualizadas */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card className="bg-gradient-to-br from-blue-800/50 to-slate-800/50 border-blue-700/30 backdrop-blur-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-blue-200">
@@ -112,21 +143,6 @@ const Index = () => {
               <div className="text-2xl font-bold text-white">{totalInfractions}</div>
               <p className="text-xs text-blue-300">
                 registradas no sistema
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-blue-800/50 to-slate-800/50 border-blue-700/30 backdrop-blur-sm">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-blue-200">
-                Policiais Envolvidos
-              </CardTitle>
-              <User className="h-4 w-4 text-amber-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">{uniqueOfficers}</div>
-              <p className="text-xs text-blue-300">
-                policiais únicos
               </p>
             </CardContent>
           </Card>
@@ -145,25 +161,89 @@ const Index = () => {
               </p>
             </CardContent>
           </Card>
+          
+          <Card className="bg-gradient-to-br from-purple-800/50 to-slate-800/50 border-purple-700/30 backdrop-blur-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-purple-200">
+                Policiais Aplicadores
+              </CardTitle>
+              <Users className="h-4 w-4 text-amber-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white">{uniqueOfficers}</div>
+              <p className="text-xs text-purple-300">
+                aplicadores ativos
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Barra de Pesquisa */}
-        <Card className="bg-gradient-to-br from-blue-800/30 to-slate-800/30 border-blue-700/30 backdrop-blur-sm mb-6">
-          <CardContent className="p-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-300 h-5 w-5" />
-              <Input
-                placeholder="Pesquisar por nome, ID, guarnição, tipo de punição ou registrado por..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-slate-700/50 border-blue-600/30 text-white placeholder-blue-300 focus:border-amber-400 focus:ring-amber-400/30"
-              />
-            </div>
-          </CardContent>
-        </Card>
+        {/* Sistema de Abas */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 bg-slate-800/50 border-blue-700/30 mb-6">
+            <TabsTrigger 
+              value="infractions" 
+              className="text-blue-200 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-300"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Infrações ({infractions.length})
+            </TabsTrigger>
+            <TabsTrigger 
+              value="officers" 
+              className="text-blue-200 data-[state=active]:bg-amber-500/20 data-[state=active]:text-amber-300"
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Policiais Aplicadores ({uniqueOfficers})
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Tabela de Infrações */}
-        <InfractionTable infractions={filteredInfractions} />
+          <TabsContent value="infractions" className="space-y-6">
+            {/* Barra de Pesquisa com filtros */}
+            <Card className="bg-gradient-to-br from-blue-800/30 to-slate-800/30 border-blue-700/30 backdrop-blur-sm">
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-300 h-5 w-5" />
+                    <Input
+                      placeholder="Pesquisar por nome, ID, guarnição, tipo de punição ou registrado por..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 bg-slate-700/50 border-blue-600/30 text-white placeholder-blue-300 focus:border-amber-400 focus:ring-amber-400/30"
+                    />
+                  </div>
+                  
+                  {/* Filtros ativos */}
+                  {officerFilter && (
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="secondary" className="bg-amber-500/20 text-amber-300 border-amber-500/30">
+                        Aplicador: {officerFilter}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={clearFilters}
+                        className="text-blue-300 hover:text-white h-6 px-2"
+                      >
+                        Limpar filtros
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Tabela de Infrações */}
+            <InfractionTable infractions={filteredInfractions} />
+          </TabsContent>
+
+          <TabsContent value="officers">
+            {/* Tabela de Policiais Aplicadores */}
+            <OfficersTable 
+              infractions={infractions} 
+              onFilterByOfficer={handleFilterByOfficer}
+            />
+          </TabsContent>
+        </Tabs>
 
         {/* Formulário Modal */}
         {showForm && (
