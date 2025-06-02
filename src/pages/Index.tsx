@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Shield, AlertTriangle, FileText, Calendar, User, Users } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -131,67 +130,67 @@ const Index = () => {
       </div>
 
       <div className="container mx-auto px-8 py-10">
-        {/* Estatísticas Atualizadas */}
+        {/* Estatísticas com melhor visibilidade */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
-          <Card className="bg-gradient-to-br from-blue-800/50 to-slate-800/50 border-blue-700/30 backdrop-blur-sm">
+          <Card className="bg-gradient-to-br from-blue-800/90 to-slate-800/90 border-blue-600/60 backdrop-blur-sm shadow-2xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-base font-medium text-blue-200">
+              <CardTitle className="text-base font-medium text-blue-100">
                 Total de Infrações
               </CardTitle>
               <FileText className="h-5 w-5 text-amber-400" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-white">{totalInfractions}</div>
-              <p className="text-sm text-blue-300 mt-1">
+              <p className="text-sm text-blue-200 mt-1">
                 registradas no sistema
               </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-red-800/50 to-slate-800/50 border-red-700/30 backdrop-blur-sm">
+          <Card className="bg-gradient-to-br from-red-800/90 to-slate-800/90 border-red-600/60 backdrop-blur-sm shadow-2xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-base font-medium text-red-200">
+              <CardTitle className="text-base font-medium text-red-100">
                 Infrações Graves
               </CardTitle>
               <AlertTriangle className="h-5 w-5 text-red-400" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-white">{graveInfractions}</div>
-              <p className="text-sm text-red-300 mt-1">
+              <p className="text-sm text-red-200 mt-1">
                 requerem atenção especial
               </p>
             </CardContent>
           </Card>
           
-          <Card className="bg-gradient-to-br from-purple-800/50 to-slate-800/50 border-purple-700/30 backdrop-blur-sm">
+          <Card className="bg-gradient-to-br from-purple-800/90 to-slate-800/90 border-purple-600/60 backdrop-blur-sm shadow-2xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-base font-medium text-purple-200">
+              <CardTitle className="text-base font-medium text-purple-100">
                 Policiais Aplicadores
               </CardTitle>
               <Users className="h-5 w-5 text-amber-400" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-white">{uniqueOfficers}</div>
-              <p className="text-sm text-purple-300 mt-1">
+              <p className="text-sm text-purple-200 mt-1">
                 aplicadores ativos
               </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Sistema de Abas */}
+        {/* Sistema de Abas com melhor visibilidade */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-slate-800/50 border-blue-700/30 mb-8 h-14">
+          <TabsList className="grid w-full grid-cols-2 bg-slate-800/90 border-blue-600/50 mb-8 h-14 shadow-xl">
             <TabsTrigger 
               value="infractions" 
-              className="text-blue-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500/30 data-[state=active]:to-yellow-500/30 data-[state=active]:text-amber-100 data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-amber-400/30 py-3 px-6 text-base font-medium"
+              className="text-blue-100 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500/50 data-[state=active]:to-yellow-500/50 data-[state=active]:text-amber-50 data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-amber-400/50 py-3 px-6 text-base font-medium transition-all duration-200"
             >
               <FileText className="h-5 w-5 mr-3" />
               Infrações ({infractions.length})
             </TabsTrigger>
             <TabsTrigger 
               value="officers" 
-              className="text-blue-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500/30 data-[state=active]:to-yellow-500/30 data-[state=active]:text-amber-100 data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-amber-400/30 py-3 px-6 text-base font-medium"
+              className="text-blue-100 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500/50 data-[state=active]:to-yellow-500/50 data-[state=active]:text-amber-50 data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-amber-400/50 py-3 px-6 text-base font-medium transition-all duration-200"
             >
               <Users className="h-5 w-5 mr-3" />
               Policiais Aplicadores ({uniqueOfficers})
@@ -199,31 +198,31 @@ const Index = () => {
           </TabsList>
 
           <TabsContent value="infractions" className="space-y-8">
-            {/* Barra de Pesquisa com filtros */}
-            <Card className="bg-gradient-to-br from-blue-800/30 to-slate-800/30 border-blue-700/30 backdrop-blur-sm">
+            {/* Barra de Pesquisa com melhor visibilidade */}
+            <Card className="bg-gradient-to-br from-blue-800/80 to-slate-800/80 border-blue-600/60 backdrop-blur-sm shadow-2xl">
               <CardContent className="p-8">
                 <div className="space-y-6">
                   <div className="relative">
-                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-300 h-6 w-6" />
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-200 h-6 w-6" />
                     <Input
                       placeholder="Pesquisar por nome, ID, guarnição, tipo de punição ou registrado por..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-12 bg-slate-700/50 border-blue-600/30 text-white placeholder-blue-300 focus:border-amber-400 focus:ring-amber-400/30 h-12 text-base"
+                      className="pl-12 bg-slate-700/90 border-blue-500/60 text-white placeholder-blue-200 focus:border-amber-400 focus:ring-amber-400/50 h-12 text-base shadow-lg"
                     />
                   </div>
                   
                   {/* Filtros ativos */}
                   {officerFilter && (
                     <div className="flex items-center space-x-4">
-                      <Badge variant="secondary" className="bg-amber-500/20 text-amber-300 border-amber-500/30 px-4 py-2">
+                      <Badge variant="secondary" className="bg-amber-500/30 text-amber-100 border-amber-400/50 px-4 py-2 shadow-lg">
                         Aplicador: {officerFilter}
                       </Badge>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={clearFilters}
-                        className="text-blue-300 hover:text-white h-8 px-4"
+                        className="text-blue-200 hover:text-white hover:bg-blue-700/50 h-8 px-4"
                       >
                         Limpar filtros
                       </Button>
