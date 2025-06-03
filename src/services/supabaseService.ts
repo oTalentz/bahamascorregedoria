@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { DatabaseInfraction, CreateInfractionData, Garrison, InfractionDeletion, AuditLog } from '@/types/database';
 
@@ -181,7 +182,8 @@ export class SupabaseService {
         return [];
       }
 
-      return data || [];
+      // Type assertion to match our AuditLog interface
+      return (data || []) as AuditLog[];
     } catch (error) {
       console.error('Erro na função getAuditLogs:', error);
       return [];
