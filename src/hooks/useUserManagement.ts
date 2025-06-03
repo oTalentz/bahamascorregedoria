@@ -60,27 +60,70 @@ export const useUserManagement = () => {
   // Mutation para remover usuário
   const removeUserMutation = useMutation({
     mutationFn: async (userId: string) => {
+      console.log('🗑️ Iniciando remoção do usuário:', userId);
+      
+      // Buscar dados do usuário antes de remover para logs
+      const userToRemove = users.find(u => u.id === userId);
+      
       // Primeiro remover role
       const { error: roleError } = await supabase
         .from('user_roles')
         .delete()
         .eq('user_id', userId);
 
-      if (roleError) throw roleError;
+      if (roleError) {
+        console.error('❌ Erro ao remover role:', roleError);
+        throw roleError;
+      }
+
+      console.log('✅ Role removida com sucesso');
 
       // Depois remover usuário do auth
       const { error: authError } = await supabase.auth.admin.deleteUser(userId);
-      if (authError) throw authError;
+      if (authError) {
+        console.error('❌ Erro ao remover usuário do auth:', authError);
+        throw authError;
+      }
+
+      console.log('✅ Usuário removido do auth com sucesso');
+
+      // Criar log de auditoria
+      if (userToRemove) {
+        try {
+          const { error: logError } = await supabase
+            .from('audit_logs')
+            .insert([{
+              action_type: 'DELETE',
+              table_name: 'users',
+              record_id: userId,
+              user_name: 'admin', // Idealmente pegar do contexto de auth
+              details: {
+                type: 'user_removal',
+                removed_user_name: userToRemove.name,
+                removed_user_email: userToRemove.email,
+                removed_user_role: userToRemove.role
+              }
+            }]);
+
+          if (logError) {
+            console.error('⚠️ Erro ao criar log de auditoria:', logError);
+          } else {
+            console.log('✅ Log de auditoria criado');
+          }
+        } catch (logErr) {
+          console.error('💥 Erro inesperado ao criar log:', logErr);
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast({
         title: "Usuário removido",
-        description: "O usuário foi removido com sucesso.",
+        description: "O usuário foi removido com sucesso do sistema.",
       });
     },
     onError: (error: any) => {
-      console.error('Erro ao remover usuário:', error);
+      console.error('❌ Erro ao remover usuário:', error);
       toast({
         title: "Erro",
         description: error.message || "Erro ao remover usuário.",

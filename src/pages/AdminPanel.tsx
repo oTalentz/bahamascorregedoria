@@ -10,6 +10,7 @@ import { useDeletionRequests } from '@/hooks/useDeletionRequests';
 import { useUserManagement } from '@/hooks/useUserManagement';
 import { useAccessRequests } from '@/hooks/useAccessRequests';
 import AccessRequestsTable from '@/components/AccessRequestsTable';
+import RemoveUserDialog from '@/components/RemoveUserDialog';
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 
@@ -37,6 +38,13 @@ const AdminPanel = () => {
   } = useAccessRequests();
 
   const [activeTab, setActiveTab] = useState('access-requests');
+  const [removeUserDialog, setRemoveUserDialog] = useState<{
+    isOpen: boolean;
+    user: { id: string; name: string; email: string } | null;
+  }>({
+    isOpen: false,
+    user: null
+  });
 
   const handleApprove = async (requestId: string) => {
     await approveDeletionRequest(requestId);
@@ -64,10 +72,26 @@ const AdminPanel = () => {
     });
   };
 
-  const handleRemoveUser = async (userId: string, userName: string) => {
-    if (confirm(`Tem certeza que deseja remover o usuário ${userName}?`)) {
-      await removeUser(userId);
+  const handleRemoveUserClick = (userToRemove: { id: string; name: string; email: string }) => {
+    setRemoveUserDialog({
+      isOpen: true,
+      user: userToRemove
+    });
+  };
+
+  const handleConfirmRemoveUser = async () => {
+    if (!removeUserDialog.user) return;
+    
+    try {
+      await removeUser(removeUserDialog.user.id);
+      setRemoveUserDialog({ isOpen: false, user: null });
+    } catch (error) {
+      console.error('Erro ao remover usuário:', error);
     }
+  };
+
+  const handleCloseRemoveDialog = () => {
+    setRemoveUserDialog({ isOpen: false, user: null });
   };
 
   const handleLogout = async () => {
@@ -326,8 +350,13 @@ const AdminPanel = () => {
                             <Button
                               size="sm"
                               variant="destructive"
-                              onClick={() => handleRemoveUser(userItem.id, userItem.name)}
+                              onClick={() => handleRemoveUserClick({
+                                id: userItem.id,
+                                name: userItem.name,
+                                email: userItem.email
+                              })}
                               disabled={userProcessing}
+                              className="bg-red-600 hover:bg-red-700"
                             >
                               <UserX className="h-4 w-4 mr-1" />
                               Remover
@@ -343,6 +372,15 @@ const AdminPanel = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      <RemoveUserDialog
+        isOpen={removeUserDialog.isOpen}
+        onClose={handleCloseRemoveDialog}
+        onConfirm={handleConfirmRemoveUser}
+        userName={removeUserDialog.user?.name || ''}
+        userEmail={removeUserDialog.user?.email || ''}
+        isLoading={userProcessing}
+      />
     </div>
   );
 };

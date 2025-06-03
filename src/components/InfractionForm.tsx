@@ -35,14 +35,12 @@ const InfractionForm: React.FC<InfractionFormProps> = ({ onSubmit, onCancel }) =
   });
 
   const punishmentTypes = [
-    'Advertência Verbal',
-    'Advertência Escrita',
-    'Suspensão 24h',
-    'Suspensão 48h',
-    'Suspensão 72h',
-    'Rebaixamento de Patente',
-    'Demissão',
-    'Processo Administrativo'
+    'Observação',
+    'Aviso 1',
+    'Aviso 2',
+    'Aviso 3',
+    'Advertência',
+    'Exoneração'
   ];
 
   const handleSubmit = (e: React.FormEvent) => {
