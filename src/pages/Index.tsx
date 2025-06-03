@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Search, Plus, Shield, AlertTriangle, FileText, Calendar, User, Users } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -29,9 +30,8 @@ const Index = () => {
     isLoading, 
     error, 
     addInfraction, 
-    isCreating, 
-    isUsingLocalStorage, 
-    isSupabaseConfigured 
+    isCreating,
+    statistics
   } = useInfractions();
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -76,11 +76,6 @@ const Index = () => {
     setSearchTerm('');
   };
 
-  // Estatísticas
-  const totalInfractions = infractions.length;
-  const graveInfractions = infractions.filter(i => i.severity === 'Grave').length;
-  const uniqueOfficers = new Set(infractions.map(i => i.registeredBy)).size;
-
   // Mostrar loading
   if (isLoading) {
     return (
@@ -112,17 +107,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
-      {/* Aviso sobre configuração do Supabase */}
-      {!isSupabaseConfigured && (
-        <div className="bg-gradient-to-r from-amber-600 to-orange-600 text-white p-4 text-center shadow-lg">
-          <div className="container mx-auto">
-            <p className="font-semibold">
-              ⚠️ Usando armazenamento local. Para persistência completa, configure o Supabase clicando no botão verde no topo direito.
-            </p>
-          </div>
-        </div>
-      )}
-
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-950 to-slate-900 shadow-2xl border-b border-blue-800/30">
         <div className="container mx-auto px-8 py-10">
@@ -137,11 +121,9 @@ const Index = () => {
                 </h1>
                 <p className="text-blue-200 mt-2 text-lg">
                   Sistema de Acompanhamento de Infrações - Polícia das Bahamas
-                  {isUsingLocalStorage && (
-                    <span className="block text-amber-200 text-sm mt-1">
-                      (Modo Local - Configure Supabase para banco de dados)
-                    </span>
-                  )}
+                  <span className="block text-green-200 text-sm mt-1">
+                    ✅ Conectado ao Supabase - Dados persistidos
+                  </span>
                 </p>
               </div>
             </div>
@@ -158,7 +140,7 @@ const Index = () => {
       </div>
 
       <div className="container mx-auto px-8 py-10">
-        {/* Estatísticas com melhor visibilidade */}
+        {/* Estatísticas com dados reais do banco */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
           <Card className="bg-gradient-to-br from-blue-800/95 to-slate-800/95 border-blue-600/70 backdrop-blur-sm shadow-2xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
@@ -168,7 +150,7 @@ const Index = () => {
               <FileText className="h-5 w-5 text-amber-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-white">{totalInfractions}</div>
+              <div className="text-3xl font-bold text-white">{statistics.totalInfractions}</div>
               <p className="text-sm text-blue-200 mt-1">
                 registradas no sistema
               </p>
@@ -183,7 +165,7 @@ const Index = () => {
               <AlertTriangle className="h-5 w-5 text-red-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-white">{graveInfractions}</div>
+              <div className="text-3xl font-bold text-white">{statistics.graveInfractions}</div>
               <p className="text-sm text-red-200 mt-1">
                 requerem atenção especial
               </p>
@@ -198,7 +180,7 @@ const Index = () => {
               <Users className="h-5 w-5 text-amber-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-white">{uniqueOfficers}</div>
+              <div className="text-3xl font-bold text-white">{statistics.uniqueOfficers}</div>
               <p className="text-sm text-purple-200 mt-1">
                 aplicadores ativos
               </p>
@@ -206,7 +188,7 @@ const Index = () => {
           </Card>
         </div>
 
-        {/* Sistema de Abas com melhor visibilidade */}
+        {/* Sistema de Abas */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 bg-slate-800/95 border-blue-600/60 mb-8 h-14 shadow-xl">
             <TabsTrigger 
@@ -221,12 +203,12 @@ const Index = () => {
               className="text-blue-100 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500/60 data-[state=active]:to-yellow-500/60 data-[state=active]:text-amber-50 data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-amber-400/60 py-3 px-6 text-base font-medium transition-all duration-200"
             >
               <Users className="h-5 w-5 mr-3" />
-              Policiais Aplicadores ({uniqueOfficers})
+              Policiais Aplicadores ({statistics.uniqueOfficers})
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="infractions" className="space-y-8">
-            {/* Barra de Pesquisa com melhor visibilidade */}
+            {/* Barra de Pesquisa */}
             <Card className="bg-gradient-to-br from-blue-800/85 to-slate-800/85 border-blue-600/70 backdrop-blur-sm shadow-2xl">
               <CardContent className="p-8">
                 <div className="space-y-6">

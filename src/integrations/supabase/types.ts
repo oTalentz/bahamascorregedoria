@@ -9,7 +9,71 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      garrisons: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: number
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: number
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
+      infractions: {
+        Row: {
+          created_at: string | null
+          evidence: string
+          garrison_id: number
+          id: string
+          officer_id: string
+          officer_name: string
+          punishment_type: string
+          registered_by: string
+          severity: string
+        }
+        Insert: {
+          created_at?: string | null
+          evidence: string
+          garrison_id: number
+          id?: string
+          officer_id: string
+          officer_name: string
+          punishment_type: string
+          registered_by: string
+          severity: string
+        }
+        Update: {
+          created_at?: string | null
+          evidence?: string
+          garrison_id?: number
+          id?: string
+          officer_id?: string
+          officer_name?: string
+          punishment_type?: string
+          registered_by?: string
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "infractions_garrison_id_fkey"
+            columns: ["garrison_id"]
+            isOneToOne: false
+            referencedRelation: "garrisons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
