@@ -2,6 +2,16 @@
 import { supabase } from '@/integrations/supabase/client';
 import { DatabaseInfraction, CreateInfractionData, Garrison } from '@/types/database';
 
+// Função helper para validar severidade
+const validateSeverity = (severity: string): 'Leve' | 'Média' | 'Grave' => {
+  const validSeverities = ['Leve', 'Média', 'Grave'];
+  if (validSeverities.includes(severity)) {
+    return severity as 'Leve' | 'Média' | 'Grave';
+  }
+  console.warn(`Severidade inválida encontrada: ${severity}. Usando 'Leve' como padrão.`);
+  return 'Leve';
+};
+
 export class SupabaseService {
   // Buscar todas as infrações com dados da guarnição
   static async getInfractions(): Promise<DatabaseInfraction[]> {
@@ -81,7 +91,7 @@ export class SupabaseService {
             officer_name: infraction.officerName,
             punishment_type: infraction.punishmentType,
             evidence: infraction.evidence,
-            severity: infraction.severity,
+            severity: validateSeverity(infraction.severity),
             registered_by: infraction.registeredBy
           };
 

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useInfractions } from '@/hooks/useInfractions';
 
 interface InfractionFormProps {
   onSubmit: (infraction: {
@@ -22,6 +23,7 @@ interface InfractionFormProps {
 }
 
 const InfractionForm: React.FC<InfractionFormProps> = ({ onSubmit, onCancel }) => {
+  const { garrisons } = useInfractions();
   const [formData, setFormData] = useState({
     garrison: '',
     officerId: '',
@@ -31,10 +33,6 @@ const InfractionForm: React.FC<InfractionFormProps> = ({ onSubmit, onCancel }) =
     severity: 'Leve' as 'Leve' | 'Média' | 'Grave',
     registeredBy: ''
   });
-
-  const garrisons = [
-    'CORE', 'BOPE', 'COE', 'GATE', 'PRF', 'CIVIL', 'ROTAM', 'CHOQUE'
-  ];
 
   const punishmentTypes = [
     'Advertência Verbal',
@@ -85,7 +83,7 @@ const InfractionForm: React.FC<InfractionFormProps> = ({ onSubmit, onCancel }) =
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Guarnição */}
+          {/* Guarnição - agora dinâmica do banco */}
           <div className="space-y-2">
             <Label htmlFor="garrison" className="text-blue-200 font-medium flex items-center space-x-2">
               <Shield className="h-4 w-4 text-amber-400" />
@@ -97,8 +95,8 @@ const InfractionForm: React.FC<InfractionFormProps> = ({ onSubmit, onCancel }) =
               </SelectTrigger>
               <SelectContent className="bg-slate-800 border-blue-600/30">
                 {garrisons.map(garrison => (
-                  <SelectItem key={garrison} value={garrison} className="text-white hover:bg-blue-700/50">
-                    {garrison}
+                  <SelectItem key={garrison.id} value={garrison.name} className="text-white hover:bg-blue-700/50">
+                    {garrison.name}
                   </SelectItem>
                 ))}
               </SelectContent>

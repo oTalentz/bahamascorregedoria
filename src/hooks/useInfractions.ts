@@ -6,6 +6,16 @@ import { Infraction } from '@/pages/Index';
 import { toast } from '@/hooks/use-toast';
 import { useEffect } from 'react';
 
+// Função helper para validar severidade
+const validateSeverity = (severity: string): 'Leve' | 'Média' | 'Grave' => {
+  const validSeverities = ['Leve', 'Média', 'Grave'];
+  if (validSeverities.includes(severity)) {
+    return severity as 'Leve' | 'Média' | 'Grave';
+  }
+  console.warn(`Severidade inválida encontrada: ${severity}. Usando 'Leve' como padrão.`);
+  return 'Leve';
+};
+
 export const useInfractions = () => {
   const queryClient = useQueryClient();
 
@@ -40,7 +50,7 @@ export const useInfractions = () => {
     punishmentType: dbInfraction.punishment_type,
     evidence: dbInfraction.evidence,
     date: new Date(dbInfraction.created_at).toLocaleDateString('pt-BR'),
-    severity: dbInfraction.severity,
+    severity: validateSeverity(dbInfraction.severity),
     registeredBy: dbInfraction.registered_by
   }));
 
@@ -110,6 +120,7 @@ export const useInfractions = () => {
     isCreating: createInfractionMutation.isPending,
     isUsingLocalStorage: false,
     isSupabaseConfigured: true,
-    statistics: statistics || { totalInfractions: 0, graveInfractions: 0, uniqueOfficers: 0 }
+    statistics: statistics || { totalInfractions: 0, graveInfractions: 0, uniqueOfficers: 0 },
+    garrisons // Expor guarnições para uso nos componentes
   };
 };
