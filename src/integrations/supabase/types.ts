@@ -39,6 +39,51 @@ export type Database = {
         }
         Relationships: []
       }
+      deletion_requests: {
+        Row: {
+          created_at: string | null
+          deletion_reason: string
+          expires_at: string | null
+          id: string
+          infraction_id: string
+          original_data: Json
+          processed_at: string | null
+          processed_by_name: string | null
+          processed_by_user_id: string | null
+          requested_by_name: string
+          requested_by_user_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          deletion_reason: string
+          expires_at?: string | null
+          id?: string
+          infraction_id: string
+          original_data: Json
+          processed_at?: string | null
+          processed_by_name?: string | null
+          processed_by_user_id?: string | null
+          requested_by_name: string
+          requested_by_user_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string | null
+          deletion_reason?: string
+          expires_at?: string | null
+          id?: string
+          infraction_id?: string
+          original_data?: Json
+          processed_at?: string | null
+          processed_by_name?: string | null
+          processed_by_user_id?: string | null
+          requested_by_name?: string
+          requested_by_user_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       garrisons: {
         Row: {
           created_at: string | null
@@ -131,11 +176,41 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_deletion_requests: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          cleaned_requests: number
+        }[]
+      }
       cleanup_old_deletion_records: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -187,6 +262,14 @@ export type Database = {
       get_daily_deletion_count: {
         Args: { deleted_by_param: string; date_param: string }
         Returns: number
+      }
+      get_daily_deletion_count_by_role: {
+        Args: { user_id_param: string; date_param: string }
+        Returns: number
+      }
+      process_approved_deletion_request: {
+        Args: { request_id_param: string }
+        Returns: undefined
       }
     }
     Enums: {

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { DatabaseInfraction, CreateInfractionData, Garrison, InfractionDeletion, AuditLog } from '@/types/database';
 
@@ -151,6 +150,23 @@ export class SupabaseService {
 
     if (error) {
       console.error('Erro ao buscar contagem de remoções:', error);
+      return 0;
+    }
+
+    return count || 0;
+  }
+
+  // Verificar quantas remoções foram feitas hoje considerando role
+  static async getDailyDeletionCountByRole(userId: string): Promise<number> {
+    const today = new Date().toISOString().split('T')[0];
+    const { data: count, error } = await supabase
+      .rpc('get_daily_deletion_count_by_role', { 
+        user_id_param: userId, 
+        date_param: today 
+      });
+
+    if (error) {
+      console.error('Erro ao buscar contagem de remoções por role:', error);
       return 0;
     }
 
@@ -318,6 +334,69 @@ export class SupabaseService {
       };
     } catch (error) {
       console.error('Erro na função executeCleanup:', error);
+      return { 
+        success: false, 
+        message: error instanceof Error ? error.message : 'Erro desconhecido' 
+      };
+    }
+  }
+
+  // Criar solicitação de remoção
+  static async createDeletionRequest(
+    infractionId: string, 
+    userId: string, 
+    userName: string, 
+    reason: string, 
+    originalData: any
+  ): Promise<void> {
+    const { error } = await supabase
+      .from('deletion_requests')
+      .insert([{
+        infraction_id: infractionId,
+        requested_by_user_id: userId,
+        requested_by_name: userName,
+        deletion_reason: reason,
+        original_data: originalData
+      }]);
+
+    if (error) {
+      console.error('Erro ao criar solicitação de remoção:', error);
+      throw error;
+    }
+  }
+
+  // Buscar solicitações de remoção
+  static async getDeletionRequests() {
+    const { data, error } = await supabase
+      .from('deletion_requests')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Erro ao buscar solicitações:', error);
+      throw error;
+    }
+
+    return data || [];
+  }
+
+  // Executar limpeza de solicitações expiradas
+  static async cleanupExpiredRequests(): Promise<{ success: boolean; message: string; data?: any }> {
+    try {
+      const { data, error } = await supabase.functions.invoke('cleanup-expired-requests');
+
+      if (error) {
+        console.error('Erro ao executar limpeza de solicitações:', error);
+        return { success: false, message: error.message };
+      }
+
+      return { 
+        success: true, 
+        message: 'Limpeza de solicitações executada com sucesso', 
+        data 
+      };
+    } catch (error) {
+      console.error('Erro na função cleanupExpiredRequests:', error);
       return { 
         success: false, 
         message: error instanceof Error ? error.message : 'Erro desconhecido' 

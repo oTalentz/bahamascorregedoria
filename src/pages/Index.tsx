@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Search, Plus, Shield, AlertTriangle, FileText, Calendar, User, Users, Activity } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,7 @@ import OfficersTable from '@/components/OfficersTable';
 import AuditLogsTable from '@/components/AuditLogsTable';
 import { useInfractions } from '@/hooks/useInfractions';
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from '@/hooks/useAuth';
 
 export interface Infraction {
   id: string;
@@ -35,8 +35,10 @@ const Index = () => {
     isCreating,
     isDeleting,
     statistics,
-    auditLogs
+    auditLogs,
+    userRole
   } = useInfractions();
+  const { user, signOut } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('infractions');
@@ -49,6 +51,10 @@ const Index = () => {
 
   const handleDeleteInfraction = (infractionId: string, deletedBy: string, reason: string) => {
     deleteInfraction(infractionId, deletedBy, reason);
+  };
+
+  const handleLogout = async () => {
+    await signOut();
   };
 
   // Filtrar infrações
@@ -130,19 +136,37 @@ const Index = () => {
                 <p className="text-blue-200 mt-2 text-lg">
                   Sistema de Acompanhamento de Infrações - Polícia das Bahamas
                   <span className="block text-green-200 text-sm mt-1">
-                    ✅ Conectado ao Supabase - Dados persistidos
+                    ✅ Conectado ao Supabase - {user?.name || user?.email} ({userRole === 'admin' ? 'Administrador' : 'Membro'})
                   </span>
                 </p>
               </div>
             </div>
-            <Button 
-              onClick={() => setShowForm(true)}
-              disabled={isCreating}
-              className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-blue-900 font-semibold shadow-lg transition-all duration-300 transform hover:scale-105 px-6 py-3"
-            >
-              <Plus className="h-6 w-6 mr-2" />
-              {isCreating ? 'Salvando...' : 'Nova Infração'}
-            </Button>
+            <div className="flex space-x-4">
+              {userRole === 'admin' && (
+                <Button 
+                  onClick={() => window.location.href = '/admin'}
+                  className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-semibold shadow-lg"
+                >
+                  <User className="h-5 w-5 mr-2" />
+                  Painel Admin
+                </Button>
+              )}
+              <Button 
+                onClick={() => setShowForm(true)}
+                disabled={isCreating}
+                className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-blue-900 font-semibold shadow-lg transition-all duration-300 transform hover:scale-105 px-6 py-3"
+              >
+                <Plus className="h-6 w-6 mr-2" />
+                {isCreating ? 'Salvando...' : 'Nova Infração'}
+              </Button>
+              <Button 
+                onClick={handleLogout}
+                variant="outline"
+                className="border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-blue-900"
+              >
+                Sair
+              </Button>
+            </div>
           </div>
         </div>
       </div>

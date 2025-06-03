@@ -4,6 +4,7 @@ import { DatabaseInfraction, CreateInfractionData, Garrison } from '@/types/data
 import { Infraction } from '@/pages/Index';
 import { toast } from '@/hooks/use-toast';
 import { useEffect } from 'react';
+import { useAuth } from '@/hooks/use-auth';
 
 // Função helper para validar severidade
 const validateSeverity = (severity: string): 'Leve' | 'Média' | 'Grave' => {
@@ -17,6 +18,7 @@ const validateSeverity = (severity: string): 'Leve' | 'Média' | 'Grave' => {
 
 export const useInfractions = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   // Query para buscar infrações
   const {
@@ -105,25 +107,60 @@ export const useInfractions = () => {
     }
   });
 
-  // Mutation para remover infração
+  // Mutation atualizada para considerar roles
   const deleteInfractionMutation = useMutation({
     mutationFn: async ({ infractionId, deletedBy, reason }: { infractionId: string, deletedBy: string, reason: string }) => {
-      return SupabaseService.deleteInfraction(infractionId, deletedBy, reason);
+      if (!user) throw new Error('Usuário não autenticado');
+
+      // Para admins - remoção direta
+      if (user.role === 'admin') {
+        return SupabaseService.deleteInfraction(infractionId, deletedBy, reason);
+      }
+
+      // Para membros - verificar limite e criar solicitação
+      const dailyCount = await SupabaseService.getDailyDeletionCountByRole(user.id);
+      if (dailyCount >= 5) {
+        throw new Error('Limite diário de 5 remoções atingido');
+      }
+
+      // Buscar dados da infração para a solicitação
+      const infractions = await SupabaseService.getInfractions();
+      const infraction = infractions.find(i => i.id === infractionId);
+      
+      if (!infraction) throw new Error('Infração não encontrada');
+
+      // Criar solicitação de remoção
+      await SupabaseService.createDeletionRequest(
+        infractionId,
+        user.id,
+        user.name || user.email,
+        reason,
+        infraction
+      );
     },
-    onSuccess: () => {
+    onSuccess: (_, { deletedBy }) => {
       queryClient.invalidateQueries({ queryKey: ['infractions'] });
       queryClient.invalidateQueries({ queryKey: ['statistics'] });
       queryClient.invalidateQueries({ queryKey: ['audit-logs'] });
-      toast({
-        title: "Infração removida",
-        description: "Infração foi removida com sucesso.",
-      });
+      queryClient.invalidateQueries({ queryKey: ['deletion-requests'] });
+      
+      if (user?.role === 'admin') {
+        toast({
+          title: "Infração removida",
+          description: "Infração foi removida com sucesso.",
+        });
+      } else {
+        toast({
+          title: "Solicitação enviada",
+          description: "Sua solicitação de remoção foi enviada para aprovação de um administrador.",
+        });
+      }
     },
     onError: (error: any) => {
-      console.error('Erro ao remover infração:', error);
+      console.error('Erro ao processar remoção:', error);
       toast({
         title: "Erro",
-        description: error.message || "Erro ao remover infração. Tente novamente.",
+        description: error.message || "Erro ao processar remoção. Tente novamente.",
         variant: "destructive"
       });
     }
@@ -198,6 +235,7 @@ export const useInfractions = () => {
     auditLogs,
     cleanupStats,
     executeCleanup: () => executeCleanupMutation.mutate(),
-    isExecutingCleanup: executeCleanupMutation.isPending
+    isExecutingCleanup: executeCleanupMutation.isPending,
+    userRole: user?.role
   };
 };

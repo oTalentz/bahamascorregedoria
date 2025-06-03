@@ -1,1 +1,8 @@
+
 project_id = "sruazvyuxgmpeduofpmt"
+
+[functions.cleanup-old-records]
+verify_jwt = false
+
+[functions.cleanup-expired-requests]
+verify_jwt = false
