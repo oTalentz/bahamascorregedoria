@@ -136,7 +136,41 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_audit_log: {
+        Args: {
+          action_type_param: string
+          table_name_param: string
+          record_id_param: string
+          user_name_param: string
+          details_param: Json
+        }
+        Returns: undefined
+      }
+      create_infraction_deletion: {
+        Args: {
+          infraction_id_param: string
+          deleted_by_param: string
+          deletion_reason_param: string
+          original_data_param: Json
+        }
+        Returns: undefined
+      }
+      get_audit_logs: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          action_type: string
+          table_name: string
+          record_id: string
+          user_name: string
+          details: Json
+          created_at: string
+        }[]
+      }
+      get_daily_deletion_count: {
+        Args: { deleted_by_param: string; date_param: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never

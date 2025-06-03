@@ -87,19 +87,24 @@ export class SupabaseService {
       throw new Error('Infração não encontrada');
     }
 
-    // Verificar limite diário
+    // Verificar limite diário usando função SQL
     const today = new Date().toISOString().split('T')[0];
-    const { count } = await supabase
+    const { data: countResult, error: countError } = await supabase
       .rpc('get_daily_deletion_count', { 
         deleted_by_param: deletedBy, 
         date_param: today 
       });
 
-    if (count && count >= 3) {
+    if (countError) {
+      console.error('Erro ao verificar limite diário:', countError);
+    }
+
+    const count = countResult || 0;
+    if (count >= 3) {
       throw new Error('Limite diário de 3 remoções atingido');
     }
 
-    // Criar registro de remoção usando SQL direto
+    // Criar registro de remoção usando função SQL
     const { error: deletionError } = await supabase
       .rpc('create_infraction_deletion', {
         infraction_id_param: infractionId,
@@ -138,7 +143,7 @@ export class SupabaseService {
   // Verificar quantas remoções foram feitas hoje por um usuário
   static async getDailyDeletionCount(deletedBy: string): Promise<number> {
     const today = new Date().toISOString().split('T')[0];
-    const { count, error } = await supabase
+    const { data: count, error } = await supabase
       .rpc('get_daily_deletion_count', { 
         deleted_by_param: deletedBy, 
         date_param: today 
@@ -167,15 +172,13 @@ export class SupabaseService {
     return data || [];
   }
 
-  // Buscar logs de auditoria
+  // Buscar logs de auditoria usando função SQL
   static async getAuditLogs(): Promise<AuditLog[]> {
     try {
-      const { data, error } = await supabase
-        .rpc('get_audit_logs');
+      const { data, error } = await supabase.rpc('get_audit_logs');
 
       if (error) {
         console.error('Erro ao buscar logs:', error);
-        // Retornar array vazio se houver erro, não falhar
         return [];
       }
 
@@ -186,17 +189,16 @@ export class SupabaseService {
     }
   }
 
-  // Criar log de auditoria
+  // Criar log de auditoria usando função SQL
   static async createAuditLog(actionType: 'CREATE' | 'DELETE', tableName: string, recordId: string, userName: string, details: any): Promise<void> {
     try {
-      const { error } = await supabase
-        .rpc('create_audit_log', {
-          action_type_param: actionType,
-          table_name_param: tableName,
-          record_id_param: recordId,
-          user_name_param: userName,
-          details_param: details
-        });
+      const { error } = await supabase.rpc('create_audit_log', {
+        action_type_param: actionType,
+        table_name_param: tableName,
+        record_id_param: recordId,
+        user_name_param: userName,
+        details_param: details
+      });
 
       if (error) {
         console.error('Erro ao criar log de auditoria:', error);
