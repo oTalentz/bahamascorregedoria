@@ -3,13 +3,14 @@ import { useState, useEffect, createContext, useContext, ReactNode } from 'react
 import { supabase } from '@/integrations/supabase/client';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { User } from '@/types/auth';
+import { useAccessRequests } from '@/hooks/useAccessRequests';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, name: string, role: 'admin' | 'member') => Promise<{ error: any }>;
+  signUp: (email: string, password: string, name: string) => Promise<{ error: any }>;
   signOut: () => Promise<{ error: any }>;
   updateUserRole: (userId: string, role: 'admin' | 'member') => Promise<{ error: any }>;
   removeUser: (userId: string) => Promise<{ error: any }>;
@@ -45,17 +46,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       if (error) {
         console.error('❌ Erro ao buscar role:', error);
-        console.log('📝 Usando role padrão "member"');
+        console.log('📝 Usuário sem role definida (novo usuário)');
       } else {
         console.log('✅ Role encontrada via RPC:', roleData);
       }
 
-      const userRole = (roleData as 'admin' | 'member') || 'member';
+      // Se não tem role, significa que é um usuário novo ou sem aprovação
+      const userRole = (roleData as 'admin' | 'member') || null;
 
-      const userData = {
+      const userData: User = {
         id: supabaseUser.id,
         email: supabaseUser.email!,
-        role: userRole,
+        role: userRole as 'admin' | 'member',
         name: supabaseUser.user_metadata?.name || supabaseUser.email
       };
 
@@ -66,7 +68,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       return {
         id: supabaseUser.id,
         email: supabaseUser.email!,
-        role: 'member',
+        role: null as any,
         name: supabaseUser.user_metadata?.name || supabaseUser.email
       };
     }
@@ -132,7 +134,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return { error };
   };
 
-  const signUp = async (email: string, password: string, name: string, role: 'admin' | 'member') => {
+  const signUp = async (email: string, password: string, name: string) => {
+    console.log('📝 Tentativa de cadastro:', email);
+    
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -144,17 +148,26 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     });
 
     if (data.user && !error) {
-      // Criar role para o usuário
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert([{
-          user_id: data.user.id,
-          role: role,
-          created_by: name
-        }]);
+      console.log('✅ Usuário criado, criando solicitação de acesso...');
+      
+      // Criar solicitação de acesso automaticamente
+      try {
+        const { error: requestError } = await supabase
+          .from('access_requests')
+          .insert([{
+            user_id: data.user.id,
+            email: email,
+            name: name,
+            reason: 'Solicitação automática de acesso ao sistema'
+          }]);
 
-      if (roleError) {
-        console.error('Erro ao criar role:', roleError);
+        if (requestError) {
+          console.error('❌ Erro ao criar solicitação:', requestError);
+        } else {
+          console.log('✅ Solicitação de acesso criada com sucesso');
+        }
+      } catch (requestErr) {
+        console.error('💥 Erro inesperado ao criar solicitação:', requestErr);
       }
     }
 

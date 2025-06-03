@@ -3,6 +3,7 @@ import { ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
+import PendingApproval from '@/components/PendingApproval';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -27,6 +28,11 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Se o usuário não tem role definida (null), significa que não foi aprovado ainda
+  if (!user.role) {
+    return <PendingApproval />;
   }
 
   if (requireAdmin && user.role !== 'admin') {

@@ -1,9 +1,10 @@
 
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Shield, User, UserCog } from 'lucide-react';
+import { Shield, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,11 +15,17 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Se já está logado, redirecionar
+  // Se já está logado, redirecionar baseado na role
   if (user) {
-    return <Navigate to={user.role === 'admin' ? '/admin' : '/'} replace />;
+    // Se tem role, redirecionar para área apropriada
+    if (user.role) {
+      return <Navigate to={user.role === 'admin' ? '/admin' : '/'} replace />;
+    }
+    // Se não tem role, será tratado pelo ProtectedRoute (mostra PendingApproval)
+    return <Navigate to="/" replace />;
   }
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -36,14 +43,14 @@ const Login = () => {
     } else {
       toast({
         title: "Login realizado",
-        description: "Bem-vindo ao sistema!",
+        description: "Verificando seus privilégios...",
       });
     }
 
     setLoading(false);
   };
 
-  const handleSignUp = async (e: React.FormEvent, role: 'admin' | 'member') => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
@@ -57,7 +64,7 @@ const Login = () => {
       return;
     }
 
-    const { error } = await signUp(email, password, name, role);
+    const { error } = await signUp(email, password, name);
 
     if (error) {
       toast({
@@ -68,7 +75,7 @@ const Login = () => {
     } else {
       toast({
         title: "Cadastro realizado",
-        description: "Verifique seu email para confirmar a conta.",
+        description: "Sua solicitação de acesso foi enviada para aprovação. Verifique seu email para confirmar a conta.",
       });
     }
 
@@ -112,7 +119,7 @@ const Login = () => {
                   Login
                 </TabsTrigger>
                 <TabsTrigger value="register" className="text-blue-100 data-[state=active]:bg-amber-500/60 data-[state=active]:text-white">
-                  Cadastro
+                  Solicitar Acesso
                 </TabsTrigger>
               </TabsList>
 
@@ -149,7 +156,7 @@ const Login = () => {
               </TabsContent>
 
               <TabsContent value="register">
-                <div className="space-y-6">
+                <form onSubmit={handleSignUp} className="space-y-6">
                   <div>
                     <Input
                       type="text"
@@ -180,26 +187,31 @@ const Login = () => {
                       className="bg-slate-700/95 border-blue-500/70 text-white placeholder-blue-200"
                     />
                   </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <Button
-                      onClick={(e) => handleSignUp(e, 'member')}
-                      disabled={loading}
-                      className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold flex items-center justify-center space-x-2"
-                    >
-                      <User className="h-4 w-4" />
-                      <span>Membro</span>
-                    </Button>
-                    <Button
-                      onClick={(e) => handleSignUp(e, 'admin')}
-                      disabled={loading}
-                      className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-blue-900 font-semibold flex items-center justify-center space-x-2"
-                    >
-                      <UserCog className="h-4 w-4" />
-                      <span>Admin</span>
-                    </Button>
+                  <div>
+                    <Textarea
+                      placeholder="Motivo da solicitação (opcional)"
+                      value={reason}
+                      onChange={(e) => setReason(e.target.value)}
+                      className="bg-slate-700/95 border-blue-500/70 text-white placeholder-blue-200 min-h-[80px]"
+                    />
                   </div>
-                </div>
+
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold flex items-center justify-center space-x-2"
+                  >
+                    <User className="h-4 w-4" />
+                    <span>{loading ? 'Enviando...' : 'Solicitar Acesso'}</span>
+                  </Button>
+
+                  <div className="bg-blue-900/50 border border-blue-600 rounded-lg p-4">
+                    <p className="text-blue-200 text-sm text-center">
+                      <strong>Importante:</strong> Sua solicitação será analisada pelos administradores. 
+                      Você receberá uma confirmação por email quando sua conta for aprovada.
+                    </p>
+                  </div>
+                </form>
               </TabsContent>
             </Tabs>
           </CardContent>

@@ -1,14 +1,14 @@
-
 import React, { useState } from 'react';
-import { Shield, Users, Clock, CheckCircle, XCircle, Trash2, UserX } from 'lucide-react';
+import { Shield, Users, Clock, CheckCircle, UserPlus } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAuth } from '@/hooks/useAuth';
 import { useDeletionRequests } from '@/hooks/useDeletionRequests';
 import { useUserManagement } from '@/hooks/useUserManagement';
+import { useAccessRequests } from '@/hooks/useAccessRequests';
+import AccessRequestsTable from '@/components/AccessRequestsTable';
+import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 
 const AdminPanel = () => {
@@ -27,8 +27,15 @@ const AdminPanel = () => {
     updateUserRole,
     isProcessing: userProcessing 
   } = useUserManagement();
+  const { 
+    accessRequests, 
+    isLoading: accessRequestsLoading, 
+    approveAccessRequest, 
+    denyAccessRequest,
+    isProcessing: accessProcessing 
+  } = useAccessRequests();
 
-  const [activeTab, setActiveTab] = useState('requests');
+  const [activeTab, setActiveTab] = useState('access-requests');
 
   const handleApprove = async (requestId: string) => {
     await approveDeletionRequest(requestId);
@@ -36,6 +43,14 @@ const AdminPanel = () => {
 
   const handleDeny = async (requestId: string) => {
     await denyDeletionRequest(requestId);
+  };
+
+  const handleApproveAccess = async (requestId: string) => {
+    await approveAccessRequest(requestId);
+  };
+
+  const handleDenyAccess = async (requestId: string) => {
+    await denyAccessRequest(requestId);
   };
 
   const handleRemoveUser = async (userId: string, userName: string) => {
@@ -48,8 +63,8 @@ const AdminPanel = () => {
     await signOut();
   };
 
-  const pendingRequests = deletionRequests.filter(req => req.status === 'pending');
-  const processedRequests = deletionRequests.filter(req => req.status !== 'pending');
+  const pendingDeletionRequests = deletionRequests.filter(req => req.status === 'pending');
+  const pendingAccessRequests = accessRequests.filter(req => req.status === 'pending');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
@@ -85,16 +100,31 @@ const AdminPanel = () => {
 
       <div className="container mx-auto px-8 py-10">
         {/* Estatísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
+          <Card className="bg-gradient-to-br from-emerald-800/95 to-slate-800/95 border-emerald-600/70 backdrop-blur-sm shadow-2xl">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardTitle className="text-base font-medium text-emerald-100">
+                Solicitações de Acesso
+              </CardTitle>
+              <UserPlus className="h-5 w-5 text-emerald-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-white">{pendingAccessRequests.length}</div>
+              <p className="text-sm text-emerald-200 mt-1">
+                aguardando aprovação
+              </p>
+            </CardContent>
+          </Card>
+
           <Card className="bg-gradient-to-br from-orange-800/95 to-slate-800/95 border-orange-600/70 backdrop-blur-sm shadow-2xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
               <CardTitle className="text-base font-medium text-orange-100">
-                Solicitações Pendentes
+                Solicitações de Remoção
               </CardTitle>
               <Clock className="h-5 w-5 text-orange-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-white">{pendingRequests.length}</div>
+              <div className="text-3xl font-bold text-white">{pendingDeletionRequests.length}</div>
               <p className="text-sm text-orange-200 mt-1">
                 aguardando aprovação
               </p>
@@ -104,12 +134,15 @@ const AdminPanel = () => {
           <Card className="bg-gradient-to-br from-green-800/95 to-slate-800/95 border-green-600/70 backdrop-blur-sm shadow-2xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
               <CardTitle className="text-base font-medium text-green-100">
-                Solicitações Processadas
+                Total Processado
               </CardTitle>
               <CheckCircle className="h-5 w-5 text-green-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-white">{processedRequests.length}</div>
+              <div className="text-3xl font-bold text-white">
+                {accessRequests.filter(req => req.status !== 'pending').length + 
+                 deletionRequests.filter(req => req.status !== 'pending').length}
+              </div>
               <p className="text-sm text-green-200 mt-1">
                 aprovadas/negadas
               </p>
@@ -119,14 +152,14 @@ const AdminPanel = () => {
           <Card className="bg-gradient-to-br from-purple-800/95 to-slate-800/95 border-purple-600/70 backdrop-blur-sm shadow-2xl">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
               <CardTitle className="text-base font-medium text-purple-100">
-                Total de Usuários
+                Usuários Ativos
               </CardTitle>
               <Users className="h-5 w-5 text-purple-400" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-white">{users.length}</div>
               <p className="text-sm text-purple-200 mt-1">
-                membros ativos
+                membros cadastrados
               </p>
             </CardContent>
           </Card>
@@ -134,13 +167,20 @@ const AdminPanel = () => {
 
         {/* Abas principais */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-slate-800/95 border-blue-600/60 mb-8 h-14 shadow-xl">
+          <TabsList className="grid w-full grid-cols-3 bg-slate-800/95 border-blue-600/60 mb-8 h-14 shadow-xl">
             <TabsTrigger 
-              value="requests" 
+              value="access-requests" 
+              className="text-blue-100 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500/60 data-[state=active]:to-yellow-500/60 data-[state=active]:text-amber-50 py-3 px-6 text-base font-medium"
+            >
+              <UserPlus className="h-5 w-5 mr-3" />
+              Solicitações de Acesso ({pendingAccessRequests.length})
+            </TabsTrigger>
+            <TabsTrigger 
+              value="deletion-requests" 
               className="text-blue-100 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500/60 data-[state=active]:to-yellow-500/60 data-[state=active]:text-amber-50 py-3 px-6 text-base font-medium"
             >
               <Clock className="h-5 w-5 mr-3" />
-              Solicitações ({pendingRequests.length})
+              Remoções ({pendingDeletionRequests.length})
             </TabsTrigger>
             <TabsTrigger 
               value="users" 
@@ -151,7 +191,18 @@ const AdminPanel = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="requests" className="space-y-8">
+          <TabsContent value="access-requests" className="space-y-8">
+            <Card className="bg-gradient-to-br from-blue-800/85 to-slate-800/85 border-blue-600/70 backdrop-blur-sm shadow-2xl">
+              <CardHeader>
+                <CardTitle className="text-xl text-white">Gerenciar Solicitações de Acesso</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <AccessRequestsTable />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="deletion-requests" className="space-y-8">
             <Card className="bg-gradient-to-br from-blue-800/85 to-slate-800/85 border-blue-600/70 backdrop-blur-sm shadow-2xl">
               <CardHeader>
                 <CardTitle className="text-xl text-white">Solicitações de Remoção Pendentes</CardTitle>
@@ -162,7 +213,7 @@ const AdminPanel = () => {
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-400 mx-auto mb-4"></div>
                     <p className="text-blue-200">Carregando solicitações...</p>
                   </div>
-                ) : pendingRequests.length === 0 ? (
+                ) : pendingDeletionRequests.length === 0 ? (
                   <div className="text-center py-8">
                     <CheckCircle className="h-16 w-16 text-green-400 mx-auto mb-4" />
                     <p className="text-blue-200 text-lg">Nenhuma solicitação pendente</p>
@@ -179,7 +230,7 @@ const AdminPanel = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {pendingRequests.map((request) => (
+                      {pendingDeletionRequests.map((request) => (
                         <TableRow key={request.id} className="border-blue-600/30 hover:bg-blue-700/30">
                           <TableCell className="text-white">{request.requested_by_name}</TableCell>
                           <TableCell className="text-blue-200 max-w-xs truncate">

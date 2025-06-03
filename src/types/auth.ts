@@ -6,6 +6,19 @@ export interface User {
   name?: string;
 }
 
+export interface AccessRequest {
+  id: string;
+  user_id: string;
+  email: string;
+  name: string;
+  reason?: string;
+  status: 'pending' | 'approved' | 'denied';
+  requested_at: string;
+  processed_at?: string;
+  processed_by_name?: string;
+  created_at: string;
+}
+
 export interface DeletionRequest {
   id: string;
   infraction_id: string;

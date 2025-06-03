@@ -9,6 +9,51 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      access_requests: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+          processed_at: string | null
+          processed_by: string | null
+          processed_by_name: string | null
+          reason: string | null
+          requested_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          processed_at?: string | null
+          processed_by?: string | null
+          processed_by_name?: string | null
+          reason?: string | null
+          requested_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          processed_by_name?: string | null
+          reason?: string | null
+          requested_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action_type: string
@@ -238,6 +283,21 @@ export type Database = {
         }
         Returns: undefined
       }
+      get_access_requests: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          user_id: string
+          email: string
+          name: string
+          reason: string
+          status: string
+          requested_at: string
+          processed_at: string
+          processed_by_name: string
+          created_at: string
+        }[]
+      }
       get_audit_logs: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -274,6 +334,14 @@ export type Database = {
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      process_access_request: {
+        Args: {
+          request_id_param: string
+          action_param: string
+          processed_by_name_param: string
+        }
+        Returns: undefined
       }
       process_approved_deletion_request: {
         Args: { request_id_param: string }
