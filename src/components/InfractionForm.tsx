@@ -1,13 +1,15 @@
 
 import React, { useState } from 'react';
-import { X, Shield, User, FileText, AlertTriangle, UserCheck, Gavel } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useInfractions } from '@/hooks/useInfractions';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { X, Shield, FileText, AlertTriangle, User, Calendar } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { SupabaseService } from '@/services/supabaseService';
 
 interface InfractionFormProps {
   onSubmit: (infraction: {
@@ -18,13 +20,24 @@ interface InfractionFormProps {
     evidence: string;
     severity: 'Leve' | 'Média' | 'Grave';
     registeredBy: string;
-    punishment?: string;
   }) => void;
   onCancel: () => void;
 }
 
+const PUNISHMENT_TYPES = [
+  'Advertência Verbal',
+  'Advertência Escrita',
+  'Repreensão',
+  'Suspensão de 1 dia',
+  'Suspensão de 3 dias',
+  'Suspensão de 7 dias',
+  'Suspensão de 15 dias',
+  'Suspensão de 30 dias',
+  'Demissão',
+  'Punição'
+];
+
 const InfractionForm: React.FC<InfractionFormProps> = ({ onSubmit, onCancel }) => {
-  const { garrisons } = useInfractions();
   const [formData, setFormData] = useState({
     garrison: '',
     officerId: '',
@@ -32,82 +45,88 @@ const InfractionForm: React.FC<InfractionFormProps> = ({ onSubmit, onCancel }) =
     punishmentType: '',
     evidence: '',
     severity: 'Leve' as 'Leve' | 'Média' | 'Grave',
-    registeredBy: '',
-    punishment: ''
+    registeredBy: ''
   });
 
-  const punishmentTypes = [
-    'Observação',
-    'Aviso 1',
-    'Aviso 2', 
-    'Aviso 3',
-    'Advertência',
-    'Exoneração'
-  ];
-
-  const punishmentOptions = [
-    'Advertência Verbal',
-    'Advertência Escrita',
-    'Suspensão 1 Dia',
-    'Suspensão 3 Dias',
-    'Suspensão 7 Dias',
-    'Rebaixamento de Cargo',
-    'Transferência Compulsória',
-    'Demissão',
-    'Nenhuma Punição Aplicada'
-  ];
+  // Buscar guarnições disponíveis
+  const { data: garrisons = [] } = useQuery({
+    queryKey: ['garrisons'],
+    queryFn: SupabaseService.getGarrisons,
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.garrison && formData.officerId && formData.officerName && formData.punishmentType && formData.evidence && formData.registeredBy) {
-      onSubmit(formData);
-      setFormData({
-        garrison: '',
-        officerId: '',
-        officerName: '',
-        punishmentType: '',
-        evidence: '',
-        severity: 'Leve',
-        registeredBy: '',
-        punishment: ''
-      });
+    
+    if (!formData.garrison || !formData.officerId || !formData.officerName || 
+        !formData.punishmentType || !formData.evidence || !formData.registeredBy) {
+      return;
+    }
+
+    onSubmit(formData);
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'Leve':
+        return 'bg-green-500/20 text-green-300 border-green-500/30';
+      case 'Média':
+        return 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30';
+      case 'Grave':
+        return 'bg-red-500/20 text-red-300 border-red-500/30';
+      default:
+        return 'bg-gray-500/20 text-gray-300 border-gray-500/30';
     }
   };
 
   return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-blue-700/30">
-        <div className="flex items-center space-x-3">
-          <div className="bg-gradient-to-br from-amber-400 to-yellow-500 p-2 rounded-lg">
-            <FileText className="h-5 w-5 text-blue-900" />
+    <Card className="w-full max-w-2xl mx-auto bg-gradient-to-br from-slate-800/95 to-blue-900/95 border-blue-700/40">
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="bg-gradient-to-br from-amber-400 to-yellow-500 p-2 rounded-lg">
+              <FileText className="h-6 w-6 text-blue-900" />
+            </div>
+            <div>
+              <CardTitle className="text-xl font-bold text-white">
+                Registrar Nova Infração
+              </CardTitle>
+              <p className="text-blue-200 text-sm mt-1">
+                Preencha todos os campos obrigatórios
+              </p>
+            </div>
           </div>
-          <h2 className="text-2xl font-bold text-white">Registrar Nova Infração</h2>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={onCancel}
+            className="text-blue-300 hover:text-white hover:bg-blue-600/20"
+          >
+            <X className="h-5 w-5" />
+          </Button>
         </div>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={onCancel}
-          className="text-blue-300 hover:text-white hover:bg-red-600/20"
-        >
-          <X className="h-5 w-5" />
-        </Button>
-      </div>
+      </CardHeader>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Guarnição */}
+      <CardContent className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Seleção de Guarnição */}
           <div className="space-y-2">
             <Label htmlFor="garrison" className="text-blue-200 font-medium flex items-center space-x-2">
-              <Shield className="h-4 w-4 text-amber-400" />
+              <Shield className="h-4 w-4" />
               <span>Guarnição</span>
             </Label>
-            <Select value={formData.garrison} onValueChange={(value) => setFormData({...formData, garrison: value})}>
+            <Select value={formData.garrison} onValueChange={(value) => handleInputChange('garrison', value)}>
               <SelectTrigger className="bg-slate-700/50 border-blue-600/30 text-white focus:border-amber-400">
                 <SelectValue placeholder="Selecione a guarnição" />
               </SelectTrigger>
               <SelectContent className="bg-slate-800 border-blue-600/30">
-                {garrisons.map(garrison => (
+                {garrisons.map((garrison) => (
                   <SelectItem key={garrison.id} value={garrison.name} className="text-white hover:bg-blue-700/50">
                     {garrison.name}
                   </SelectItem>
@@ -116,154 +135,150 @@ const InfractionForm: React.FC<InfractionFormProps> = ({ onSubmit, onCancel }) =
             </Select>
           </div>
 
-          {/* ID do Policial */}
+          {/* ID e Nome do Policial */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="officerId" className="text-blue-200 font-medium">
+                ID do Policial
+              </Label>
+              <Input
+                id="officerId"
+                value={formData.officerId}
+                onChange={(e) => handleInputChange('officerId', e.target.value)}
+                placeholder="Ex: 12345"
+                className="bg-slate-700/50 border-blue-600/30 text-white placeholder-blue-300 focus:border-amber-400"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="officerName" className="text-blue-200 font-medium flex items-center space-x-2">
+                <User className="h-4 w-4" />
+                <span>Nome do Policial</span>
+              </Label>
+              <Input
+                id="officerName"
+                value={formData.officerName}
+                onChange={(e) => handleInputChange('officerName', e.target.value)}
+                placeholder="Ex: João Silva"
+                className="bg-slate-700/50 border-blue-600/30 text-white placeholder-blue-300 focus:border-amber-400"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Tipo de Punição */}
           <div className="space-y-2">
-            <Label htmlFor="officerId" className="text-blue-200 font-medium flex items-center space-x-2">
-              <User className="h-4 w-4 text-amber-400" />
-              <span>ID do Policial</span>
+            <Label htmlFor="punishmentType" className="text-blue-200 font-medium">
+              Tipo de Punição
             </Label>
-            <Input
-              id="officerId"
-              value={formData.officerId}
-              onChange={(e) => setFormData({...formData, officerId: e.target.value})}
-              placeholder="Ex: 1234"
-              className="bg-slate-700/50 border-blue-600/30 text-white placeholder-blue-300 focus:border-amber-400 focus:ring-amber-400/30"
+            <Select value={formData.punishmentType} onValueChange={(value) => handleInputChange('punishmentType', value)}>
+              <SelectTrigger className="bg-slate-700/50 border-blue-600/30 text-white focus:border-amber-400">
+                <SelectValue placeholder="Selecione o tipo de punição" />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800 border-blue-600/30 max-h-60">
+                {PUNISHMENT_TYPES.map((type) => (
+                  <SelectItem key={type} value={type} className="text-white hover:bg-blue-700/50">
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Severidade */}
+          <div className="space-y-2">
+            <Label htmlFor="severity" className="text-blue-200 font-medium flex items-center space-x-2">
+              <AlertTriangle className="h-4 w-4" />
+              <span>Severidade</span>
+            </Label>
+            <div className="flex space-x-3">
+              {(['Leve', 'Média', 'Grave'] as const).map((level) => (
+                <button
+                  key={level}
+                  type="button"
+                  onClick={() => handleInputChange('severity', level)}
+                  className={`flex-1 p-3 rounded-lg border transition-all duration-200 ${
+                    formData.severity === level
+                      ? getSeverityColor(level)
+                      : 'bg-slate-700/30 border-slate-600/50 text-slate-300 hover:bg-slate-600/50'
+                  }`}
+                >
+                  <Badge className={formData.severity === level ? getSeverityColor(level) : 'bg-slate-600/50 text-slate-300'}>
+                    {level}
+                  </Badge>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Evidências */}
+          <div className="space-y-2">
+            <Label htmlFor="evidence" className="text-blue-200 font-medium">
+              Evidências / Descrição
+            </Label>
+            <Textarea
+              id="evidence"
+              value={formData.evidence}
+              onChange={(e) => handleInputChange('evidence', e.target.value)}
+              placeholder="Descreva a infração e as evidências..."
+              rows={4}
+              className="bg-slate-700/50 border-blue-600/30 text-white placeholder-blue-300 focus:border-amber-400 resize-none"
               required
             />
           </div>
-        </div>
 
-        {/* Nome do Policial */}
-        <div className="space-y-2">
-          <Label htmlFor="officerName" className="text-blue-200 font-medium">
-            Nome do Policial
-          </Label>
-          <Input
-            id="officerName"
-            value={formData.officerName}
-            onChange={(e) => setFormData({...formData, officerName: e.target.value})}
-            placeholder="Ex: João Silva"
-            className="bg-slate-700/50 border-blue-600/30 text-white placeholder-blue-300 focus:border-amber-400 focus:ring-amber-400/30"
-            required
-          />
-        </div>
+          {/* Registrado Por */}
+          <div className="space-y-2">
+            <Label htmlFor="registeredBy" className="text-blue-200 font-medium">
+              Registrado Por
+            </Label>
+            <Input
+              id="registeredBy"
+              value={formData.registeredBy}
+              onChange={(e) => handleInputChange('registeredBy', e.target.value)}
+              placeholder="Ex: Inspetor Carlos Santos"
+              className="bg-slate-700/50 border-blue-600/30 text-white placeholder-blue-300 focus:border-amber-400"
+              required
+            />
+          </div>
 
-        {/* Registrado Por */}
-        <div className="space-y-2">
-          <Label htmlFor="registeredBy" className="text-blue-200 font-medium flex items-center space-x-2">
-            <UserCheck className="h-4 w-4 text-amber-400" />
-            <span>Registrado Por</span>
-          </Label>
-          <Input
-            id="registeredBy"
-            value={formData.registeredBy}
-            onChange={(e) => setFormData({...formData, registeredBy: e.target.value})}
-            placeholder="Ex: Inspetor Maria Santos"
-            className="bg-slate-700/50 border-blue-600/30 text-white placeholder-blue-300 focus:border-amber-400 focus:ring-amber-400/30"
-            required
-          />
-        </div>
+          {/* Botões */}
+          <div className="flex space-x-4 pt-4 border-t border-blue-700/30">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onCancel}
+              className="flex-1 border-blue-600/30 text-blue-200 hover:bg-blue-700/20 hover:text-white"
+            >
+              Cancelar
+            </Button>
+            <Button 
+              type="submit"
+              className="flex-1 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-blue-900 font-semibold shadow-lg transition-all duration-300"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Registrar Infração
+            </Button>
+          </div>
+        </form>
 
-        {/* Tipo de Punição */}
-        <div className="space-y-2">
-          <Label htmlFor="punishmentType" className="text-blue-200 font-medium">
-            Tipo de Punição
-          </Label>
-          <Select value={formData.punishmentType} onValueChange={(value) => setFormData({...formData, punishmentType: value})}>
-            <SelectTrigger className="bg-slate-700/50 border-blue-600/30 text-white focus:border-amber-400">
-              <SelectValue placeholder="Selecione o tipo de punição" />
-            </SelectTrigger>
-            <SelectContent className="bg-slate-800 border-blue-600/30">
-              {punishmentTypes.map(type => (
-                <SelectItem key={type} value={type} className="text-white hover:bg-blue-700/50">
-                  {type}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Punição Aplicada */}
-        <div className="space-y-2">
-          <Label htmlFor="punishment" className="text-blue-200 font-medium flex items-center space-x-2">
-            <Gavel className="h-4 w-4 text-amber-400" />
-            <span>Punição Aplicada</span>
-          </Label>
-          <Select value={formData.punishment} onValueChange={(value) => setFormData({...formData, punishment: value})}>
-            <SelectTrigger className="bg-slate-700/50 border-blue-600/30 text-white focus:border-amber-400">
-              <SelectValue placeholder="Selecione a punição aplicada" />
-            </SelectTrigger>
-            <SelectContent className="bg-slate-800 border-blue-600/30">
-              {punishmentOptions.map(punishment => (
-                <SelectItem key={punishment} value={punishment} className="text-white hover:bg-blue-700/50">
-                  {punishment}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Gravidade */}
-        <div className="space-y-3">
-          <Label className="text-blue-200 font-medium flex items-center space-x-2">
-            <AlertTriangle className="h-4 w-4 text-amber-400" />
-            <span>Gravidade da Infração</span>
-          </Label>
-          <RadioGroup 
-            value={formData.severity} 
-            onValueChange={(value: 'Leve' | 'Média' | 'Grave') => setFormData({...formData, severity: value})}
-            className="flex space-x-6"
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="Leve" id="leve" className="border-green-400 text-green-400" />
-              <Label htmlFor="leve" className="text-green-300">Leve</Label>
+        {/* Informações adicionais */}
+        <div className="bg-blue-900/30 border border-blue-600/30 rounded-lg p-4">
+          <div className="flex items-start space-x-3">
+            <Calendar className="h-5 w-5 text-blue-400 flex-shrink-0 mt-0.5" />
+            <div className="text-blue-200 text-sm">
+              <p className="font-medium mb-1">Informações importantes:</p>
+              <ul className="space-y-1 text-blue-300">
+                <li>• A infração será registrada com data e hora atuais</li>
+                <li>• Infrações graves requerem evidências detalhadas</li>
+                <li>• O registro será auditado e não pode ser alterado</li>
+                <li>• Todos os campos são obrigatórios</li>
+              </ul>
             </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="Média" id="media" className="border-yellow-400 text-yellow-400" />
-              <Label htmlFor="media" className="text-yellow-300">Média</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="Grave" id="grave" className="border-red-400 text-red-400" />
-              <Label htmlFor="grave" className="text-red-300">Grave</Label>
-            </div>
-          </RadioGroup>
+          </div>
         </div>
-
-        {/* Prova */}
-        <div className="space-y-2">
-          <Label htmlFor="evidence" className="text-blue-200 font-medium">
-            Prova da Infração
-          </Label>
-          <Textarea
-            id="evidence"
-            value={formData.evidence}
-            onChange={(e) => setFormData({...formData, evidence: e.target.value})}
-            placeholder="Descreva as evidências da infração (prints, vídeos, testemunhas, etc.)"
-            rows={4}
-            className="bg-slate-700/50 border-blue-600/30 text-white placeholder-blue-300 focus:border-amber-400 focus:ring-amber-400/30 resize-none"
-            required
-          />
-        </div>
-
-        {/* Botões */}
-        <div className="flex space-x-4 pt-4 border-t border-blue-700/30">
-          <Button 
-            type="submit"
-            className="flex-1 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-blue-900 font-semibold shadow-lg transition-all duration-300"
-          >
-            Registrar Infração
-          </Button>
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={onCancel}
-            className="flex-1 border-blue-600/30 text-blue-200 hover:bg-blue-700/20 hover:text-white"
-          >
-            Cancelar
-          </Button>
-        </div>
-      </form>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
