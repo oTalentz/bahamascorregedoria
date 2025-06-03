@@ -86,11 +86,11 @@ export class SupabaseService {
       throw new Error('Infração não encontrada');
     }
 
-    // Verificar limite diário usando função SQL
+    // Verificar limite diário usando função SQL otimizada
     const today = new Date().toISOString().split('T')[0];
     const { data: countResult, error: countError } = await supabase
-      .rpc('get_daily_deletion_count', { 
-        deleted_by_param: deletedBy, 
+      .rpc('get_daily_deletion_count_by_role', { 
+        user_id_param: (await supabase.auth.getUser()).data.user?.id, 
         date_param: today 
       });
 
@@ -99,6 +99,7 @@ export class SupabaseService {
     }
 
     const count = countResult || 0;
+    // Para membros, verificar limite de 3. Para admins, count é 0 (sem limite)
     if (count >= 3) {
       throw new Error('Limite diário de 3 remoções atingido');
     }
@@ -137,23 +138,6 @@ export class SupabaseService {
     });
 
     console.log('Infração removida com sucesso:', infractionId);
-  }
-
-  // Verificar quantas remoções foram feitas hoje por um usuário
-  static async getDailyDeletionCount(deletedBy: string): Promise<number> {
-    const today = new Date().toISOString().split('T')[0];
-    const { data: count, error } = await supabase
-      .rpc('get_daily_deletion_count', { 
-        deleted_by_param: deletedBy, 
-        date_param: today 
-      });
-
-    if (error) {
-      console.error('Erro ao buscar contagem de remoções:', error);
-      return 0;
-    }
-
-    return count || 0;
   }
 
   // Verificar quantas remoções foram feitas hoje considerando role

@@ -1,3 +1,4 @@
+
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
@@ -38,7 +39,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     console.log('🔍 Buscando role para usuário:', supabaseUser.email, 'ID:', supabaseUser.id);
     
     try {
-      // Use the fixed function to get current user role
+      // Use the security definer function to get user role safely
       const { data: roleData, error } = await supabase
         .rpc('get_current_user_role');
 

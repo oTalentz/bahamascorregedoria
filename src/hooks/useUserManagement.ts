@@ -15,7 +15,15 @@ export const useUserManagement = () => {
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['users'],
     queryFn: async (): Promise<UserWithRole[]> => {
-      // Buscar usuários com suas roles
+      // Check if current user is admin first using the safe function
+      const { data: isAdmin, error: adminError } = await supabase.rpc('is_admin');
+      
+      if (adminError || !isAdmin) {
+        console.log('Usuário não é admin ou erro ao verificar:', adminError);
+        return [];
+      }
+
+      // Buscar usuários com suas roles (agora seguro para admins)
       const { data: rolesData, error: rolesError } = await supabase
         .from('user_roles')
         .select(`
@@ -87,23 +95,22 @@ export const useUserManagement = () => {
 
       console.log('✅ Usuário removido do auth com sucesso');
 
-      // Criar log de auditoria
+      // Criar log de auditoria usando a função SQL
       if (userToRemove) {
         try {
           const { error: logError } = await supabase
-            .from('audit_logs')
-            .insert([{
-              action_type: 'DELETE',
-              table_name: 'users',
-              record_id: userId,
-              user_name: 'admin', // Idealmente pegar do contexto de auth
-              details: {
+            .rpc('create_audit_log', {
+              action_type_param: 'DELETE',
+              table_name_param: 'users',
+              record_id_param: userId,
+              user_name_param: 'admin',
+              details_param: {
                 type: 'user_removal',
                 removed_user_name: userToRemove.name,
                 removed_user_email: userToRemove.email,
                 removed_user_role: userToRemove.role
               }
-            }]);
+            });
 
           if (logError) {
             console.error('⚠️ Erro ao criar log de auditoria:', logError);
