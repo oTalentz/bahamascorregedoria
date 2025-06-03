@@ -41,7 +41,7 @@ export interface InfractionDeletion {
 
 export interface AuditLog {
   id: string;
-  action_type: 'CREATE' | 'DELETE';
+  action_type: 'CREATE' | 'DELETE' | 'CLEANUP';
   table_name: string;
   record_id: string;
   user_name: string;
