@@ -2,7 +2,7 @@
 export interface User {
   id: string;
   email: string;
-  role: 'admin' | 'member';
+  role: 'admin' | 'member' | null;
   name?: string;
 }
 
@@ -40,4 +40,14 @@ export interface UserRole {
   role: 'admin' | 'member';
   created_at: string;
   created_by?: string;
+}
+
+export interface AuditLog {
+  id: string;
+  action_type: 'CREATE' | 'DELETE' | 'CLEANUP';
+  table_name: string;
+  record_id: string;
+  user_name: string;
+  details: any;
+  created_at: string;
 }

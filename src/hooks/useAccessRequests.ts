@@ -18,7 +18,11 @@ export const useAccessRequests = () => {
         throw error;
       }
 
-      return data || [];
+      // Type cast para garantir que status seja do tipo correto
+      return (data || []).map((item: any): AccessRequest => ({
+        ...item,
+        status: item.status as 'pending' | 'approved' | 'denied'
+      }));
     }
   });
 

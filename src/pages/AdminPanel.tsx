@@ -1,8 +1,10 @@
+
 import React, { useState } from 'react';
-import { Shield, Users, Clock, CheckCircle, UserPlus } from 'lucide-react';
+import { Shield, Users, Clock, CheckCircle, UserPlus, XCircle, UserX } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { useAuth } from '@/hooks/useAuth';
 import { useDeletionRequests } from '@/hooks/useDeletionRequests';
 import { useUserManagement } from '@/hooks/useUserManagement';
@@ -30,8 +32,7 @@ const AdminPanel = () => {
   const { 
     accessRequests, 
     isLoading: accessRequestsLoading, 
-    approveAccessRequest, 
-    denyAccessRequest,
+    processRequest,
     isProcessing: accessProcessing 
   } = useAccessRequests();
 
@@ -46,11 +47,21 @@ const AdminPanel = () => {
   };
 
   const handleApproveAccess = async (requestId: string) => {
-    await approveAccessRequest(requestId);
+    if (!user?.name) return;
+    processRequest({
+      requestId,
+      action: 'approved',
+      adminName: user.name
+    });
   };
 
   const handleDenyAccess = async (requestId: string) => {
-    await denyAccessRequest(requestId);
+    if (!user?.name) return;
+    processRequest({
+      requestId,
+      action: 'denied',
+      adminName: user.name
+    });
   };
 
   const handleRemoveUser = async (userId: string, userName: string) => {
