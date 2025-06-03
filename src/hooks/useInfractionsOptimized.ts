@@ -97,8 +97,19 @@ export const useInfractionsOptimized = () => {
         throw error;
       }
 
-      console.log('✅ Logs carregados:', data?.length || 0);
-      return data || [];
+      // Transform and validate the data to match AuditLog interface
+      const validatedLogs: AuditLog[] = (data || []).map(log => ({
+        id: log.id,
+        action_type: log.action_type as 'CREATE' | 'DELETE' | 'CLEANUP',
+        table_name: log.table_name,
+        record_id: log.record_id,
+        user_name: log.user_name,
+        details: log.details,
+        created_at: log.created_at
+      }));
+
+      console.log('✅ Logs carregados:', validatedLogs.length);
+      return validatedLogs;
     },
     staleTime: 60000, // Cache por 1 minuto
   });
