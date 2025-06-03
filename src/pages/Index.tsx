@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Search, Plus, Shield, AlertTriangle, FileText, Calendar, User, Users } from 'lucide-react';
+import { Search, Plus, Shield, AlertTriangle, FileText, Calendar, User, Users, Activity } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import InfractionForm from '@/components/InfractionForm';
 import InfractionTable from '@/components/InfractionTable';
 import OfficersTable from '@/components/OfficersTable';
+import AuditLogsTable from '@/components/AuditLogsTable';
 import { useInfractions } from '@/hooks/useInfractions';
 import { toast } from "@/hooks/use-toast";
 
@@ -30,8 +31,11 @@ const Index = () => {
     isLoading, 
     error, 
     addInfraction, 
+    deleteInfraction,
     isCreating,
-    statistics
+    isDeleting,
+    statistics,
+    auditLogs
   } = useInfractions();
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -41,6 +45,10 @@ const Index = () => {
   const handleAddInfraction = (infraction: Omit<Infraction, 'id' | 'date'>) => {
     addInfraction(infraction);
     setShowForm(false);
+  };
+
+  const handleDeleteInfraction = (infractionId: string, deletedBy: string, reason: string) => {
+    deleteInfraction(infractionId, deletedBy, reason);
   };
 
   // Filtrar infrações
@@ -190,7 +198,7 @@ const Index = () => {
 
         {/* Sistema de Abas */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-slate-800/95 border-blue-600/60 mb-8 h-14 shadow-xl">
+          <TabsList className="grid w-full grid-cols-3 bg-slate-800/95 border-blue-600/60 mb-8 h-14 shadow-xl">
             <TabsTrigger 
               value="infractions" 
               className="text-blue-100 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500/60 data-[state=active]:to-yellow-500/60 data-[state=active]:text-amber-50 data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-amber-400/60 py-3 px-6 text-base font-medium transition-all duration-200"
@@ -204,6 +212,13 @@ const Index = () => {
             >
               <Users className="h-5 w-5 mr-3" />
               Policiais Aplicadores ({statistics.uniqueOfficers})
+            </TabsTrigger>
+            <TabsTrigger 
+              value="logs" 
+              className="text-blue-100 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500/60 data-[state=active]:to-yellow-500/60 data-[state=active]:text-amber-50 data-[state=active]:shadow-lg data-[state=active]:border data-[state=active]:border-amber-400/60 py-3 px-6 text-base font-medium transition-all duration-200"
+            >
+              <Activity className="h-5 w-5 mr-3" />
+              Logs de Auditoria ({auditLogs.length})
             </TabsTrigger>
           </TabsList>
 
@@ -243,7 +258,10 @@ const Index = () => {
             </Card>
 
             {/* Tabela de Infrações */}
-            <InfractionTable infractions={filteredInfractions} />
+            <InfractionTable 
+              infractions={filteredInfractions} 
+              onDeleteInfraction={handleDeleteInfraction}
+            />
           </TabsContent>
 
           <TabsContent value="officers" className="space-y-8">
@@ -252,6 +270,11 @@ const Index = () => {
               infractions={infractions} 
               onFilterByOfficer={handleFilterByOfficer}
             />
+          </TabsContent>
+
+          <TabsContent value="logs" className="space-y-8">
+            {/* Tabela de Logs de Auditoria */}
+            <AuditLogsTable auditLogs={auditLogs} />
           </TabsContent>
         </Tabs>
 
@@ -263,6 +286,16 @@ const Index = () => {
                 onSubmit={handleAddInfraction} 
                 onCancel={() => setShowForm(false)} 
               />
+            </div>
+          </div>
+        )}
+
+        {/* Indicador de carregamento para remoção */}
+        {isDeleting && (
+          <div className="fixed bottom-4 right-4 bg-red-800/90 border border-red-600 rounded-lg p-4 shadow-lg">
+            <div className="flex items-center space-x-3 text-white">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-400"></div>
+              <span>Removendo infração...</span>
             </div>
           </div>
         )}

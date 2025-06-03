@@ -41,6 +41,12 @@ export const useInfractions = () => {
     queryFn: SupabaseService.getStatistics,
   });
 
+  // Query para buscar logs
+  const { data: auditLogs = [] } = useQuery({
+    queryKey: ['audit-logs'],
+    queryFn: SupabaseService.getAuditLogs,
+  });
+
   // Converter infrações do banco para formato do frontend
   const infractions: Infraction[] = databaseInfractions.map(dbInfraction => ({
     id: dbInfraction.id,
@@ -77,6 +83,7 @@ export const useInfractions = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['infractions'] });
       queryClient.invalidateQueries({ queryKey: ['statistics'] });
+      queryClient.invalidateQueries({ queryKey: ['audit-logs'] });
       toast({
         title: "Infração registrada",
         description: "Infração foi registrada com sucesso no banco de dados.",
@@ -92,9 +99,38 @@ export const useInfractions = () => {
     }
   });
 
+  // Mutation para remover infração
+  const deleteInfractionMutation = useMutation({
+    mutationFn: async ({ infractionId, deletedBy, reason }: { infractionId: string, deletedBy: string, reason: string }) => {
+      return SupabaseService.deleteInfraction(infractionId, deletedBy, reason);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['infractions'] });
+      queryClient.invalidateQueries({ queryKey: ['statistics'] });
+      queryClient.invalidateQueries({ queryKey: ['audit-logs'] });
+      toast({
+        title: "Infração removida",
+        description: "Infração foi removida com sucesso.",
+      });
+    },
+    onError: (error: any) => {
+      console.error('Erro ao remover infração:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao remover infração. Tente novamente.",
+        variant: "destructive"
+      });
+    }
+  });
+
   // Função principal para adicionar infração
   const addInfraction = (infraction: Omit<Infraction, 'id' | 'date'>) => {
     createInfractionMutation.mutate(infraction);
+  };
+
+  // Função para remover infração
+  const deleteInfraction = (infractionId: string, deletedBy: string, reason: string) => {
+    deleteInfractionMutation.mutate({ infractionId, deletedBy, reason });
   };
 
   // Migrar dados do localStorage na primeira execução
@@ -117,10 +153,13 @@ export const useInfractions = () => {
     isLoading,
     error,
     addInfraction,
+    deleteInfraction,
     isCreating: createInfractionMutation.isPending,
+    isDeleting: deleteInfractionMutation.isPending,
     isUsingLocalStorage: false,
     isSupabaseConfigured: true,
     statistics: statistics || { totalInfractions: 0, graveInfractions: 0, uniqueOfficers: 0 },
-    garrisons // Expor guarnições para uso nos componentes
+    garrisons,
+    auditLogs
   };
 };

@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { DatabaseInfraction, CreateInfractionData, Garrison } from '@/types/database';
+import { DatabaseInfraction, CreateInfractionData, Garrison, InfractionDeletion, AuditLog } from '@/types/database';
 
 // Função helper para validar severidade
 const validateSeverity = (severity: string): 'Leve' | 'Média' | 'Grave' => {
@@ -55,7 +55,95 @@ export class SupabaseService {
       throw error;
     }
 
+    // Criar log de auditoria
+    await this.createAuditLog('CREATE', 'infractions', data.id, infractionData.registered_by, {
+      garrison: data.garrisons?.name,
+      officer_id: data.officer_id,
+      officer_name: data.officer_name,
+      punishment_type: data.punishment_type,
+      severity: data.severity
+    });
+
     return data;
+  }
+
+  // Remover infração (soft delete com log)
+  static async deleteInfraction(infractionId: string, deletedBy: string, reason: string): Promise<void> {
+    // Primeiro, buscar os dados originais
+    const { data: originalData, error: fetchError } = await supabase
+      .from('infractions')
+      .select(`
+        *,
+        garrisons (
+          id,
+          name,
+          description
+        )
+      `)
+      .eq('id', infractionId)
+      .single();
+
+    if (fetchError || !originalData) {
+      throw new Error('Infração não encontrada');
+    }
+
+    // Verificar limite diário
+    const today = new Date().toISOString().split('T')[0];
+    const { count } = await supabase
+      .from('infraction_deletions')
+      .select('*', { count: 'exact', head: true })
+      .eq('deleted_by', deletedBy)
+      .gte('deleted_at', `${today}T00:00:00.000Z`)
+      .lt('deleted_at', `${today}T23:59:59.999Z`);
+
+    if (count && count >= 3) {
+      throw new Error('Limite diário de 3 remoções atingido');
+    }
+
+    // Criar registro de remoção
+    const { error: deletionError } = await supabase
+      .from('infraction_deletions')
+      .insert([{
+        infraction_id: infractionId,
+        deleted_by: deletedBy,
+        deletion_reason: reason,
+        original_data: originalData
+      }]);
+
+    if (deletionError) {
+      throw deletionError;
+    }
+
+    // Remover a infração
+    const { error: removeError } = await supabase
+      .from('infractions')
+      .delete()
+      .eq('id', infractionId);
+
+    if (removeError) {
+      throw removeError;
+    }
+
+    // Criar log de auditoria
+    await this.createAuditLog('DELETE', 'infractions', infractionId, deletedBy, {
+      garrison: originalData.garrisons?.name,
+      officer_id: originalData.officer_id,
+      officer_name: originalData.officer_name,
+      reason: reason
+    });
+  }
+
+  // Verificar quantas remoções foram feitas hoje por um usuário
+  static async getDailyDeletionCount(deletedBy: string): Promise<number> {
+    const today = new Date().toISOString().split('T')[0];
+    const { count } = await supabase
+      .from('infraction_deletions')
+      .select('*', { count: 'exact', head: true })
+      .eq('deleted_by', deletedBy)
+      .gte('deleted_at', `${today}T00:00:00.000Z`)
+      .lt('deleted_at', `${today}T23:59:59.999Z`);
+
+    return count || 0;
   }
 
   // Buscar todas as guarnições
@@ -71,6 +159,38 @@ export class SupabaseService {
     }
 
     return data || [];
+  }
+
+  // Buscar logs de auditoria
+  static async getAuditLogs(): Promise<AuditLog[]> {
+    const { data, error } = await supabase
+      .from('audit_logs')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Erro ao buscar logs:', error);
+      throw error;
+    }
+
+    return data || [];
+  }
+
+  // Criar log de auditoria
+  static async createAuditLog(actionType: 'CREATE' | 'DELETE', tableName: string, recordId: string, userName: string, details: any): Promise<void> {
+    const { error } = await supabase
+      .from('audit_logs')
+      .insert([{
+        action_type: actionType,
+        table_name: tableName,
+        record_id: recordId,
+        user_name: userName,
+        details: details
+      }]);
+
+    if (error) {
+      console.error('Erro ao criar log de auditoria:', error);
+    }
   }
 
   // Migrar dados do localStorage para Supabase (caso existam)
