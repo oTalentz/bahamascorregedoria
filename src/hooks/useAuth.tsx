@@ -3,7 +3,6 @@ import { useState, useEffect, createContext, useContext, ReactNode } from 'react
 import { supabase } from '@/integrations/supabase/client';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { User } from '@/types/auth';
-import { useAccessRequests } from '@/hooks/useAccessRequests';
 
 interface AuthContextType {
   user: User | null;
@@ -40,24 +39,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     console.log('🔍 Buscando role para usuário:', supabaseUser.email, 'ID:', supabaseUser.id);
     
     try {
-      // Usar a função otimizada do banco de dados
+      // Use the fixed function to get current user role
       const { data: roleData, error } = await supabase
         .rpc('get_current_user_role');
 
       if (error) {
         console.error('❌ Erro ao buscar role:', error);
-        console.log('📝 Usuário sem role definida (novo usuário)');
       } else {
         console.log('✅ Role encontrada via RPC:', roleData);
       }
 
-      // Se não tem role, significa que é um usuário novo ou sem aprovação
-      const userRole = (roleData as 'admin' | 'member') || null;
+      // If no role, the user hasn't been approved yet
+      const userRole = roleData as 'admin' | 'member' | null;
 
       const userData: User = {
         id: supabaseUser.id,
         email: supabaseUser.email!,
-        role: userRole as 'admin' | 'member',
+        role: userRole,
         name: supabaseUser.user_metadata?.name || supabaseUser.email
       };
 
@@ -68,7 +66,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       return {
         id: supabaseUser.id,
         email: supabaseUser.email!,
-        role: null as any,
+        role: null,
         name: supabaseUser.user_metadata?.name || supabaseUser.email
       };
     }
@@ -86,7 +84,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   useEffect(() => {
     console.log('🚀 Inicializando AuthProvider...');
     
-    // Configurar listener de mudanças de auth
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('🔔 Auth state change:', event, session?.user?.email);
@@ -105,7 +103,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     );
 
-    // Verificar sessão existente
+    // Check for existing session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       console.log('🔍 Verificando sessão existente:', session?.user?.email);
       setSession(session);
@@ -150,7 +148,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     if (data.user && !error) {
       console.log('✅ Usuário criado, criando solicitação de acesso...');
       
-      // Criar solicitação de acesso automaticamente
+      // Create access request automatically
       try {
         const { error: requestError } = await supabase
           .from('access_requests')
@@ -193,7 +191,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const removeUser = async (userId: string) => {
-    // Primeiro remover role
+    // First remove role
     const { error: roleError } = await supabase
       .from('user_roles')
       .delete()
@@ -201,7 +199,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     if (roleError) return { error: roleError };
 
-    // Remover usuário (se tiver permissões de admin)
+    // Remove user (if has admin permissions)
     const { error } = await supabase.auth.admin.deleteUser(userId);
     return { error };
   };

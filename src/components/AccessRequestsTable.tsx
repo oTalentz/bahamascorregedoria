@@ -12,7 +12,11 @@ const AccessRequestsTable = () => {
   const { accessRequests, isLoading, processRequest, isProcessing } = useAccessRequests();
 
   const handleApprove = (requestId: string) => {
-    if (!user?.name) return;
+    if (!user?.name) {
+      console.error('Nome do admin não encontrado');
+      return;
+    }
+    console.log('Aprovando solicitação:', requestId, 'por:', user.name);
     processRequest({
       requestId,
       action: 'approved',
@@ -21,7 +25,11 @@ const AccessRequestsTable = () => {
   };
 
   const handleDeny = (requestId: string) => {
-    if (!user?.name) return;
+    if (!user?.name) {
+      console.error('Nome do admin não encontrado');
+      return;
+    }
+    console.log('Negando solicitação:', requestId, 'por:', user.name);
     processRequest({
       requestId,
       action: 'denied',
@@ -42,6 +50,17 @@ const AccessRequestsTable = () => {
     }
   };
 
+  // Check if user is admin
+  if (!user || user.role !== 'admin') {
+    return (
+      <div className="text-center py-8 bg-slate-700/95 rounded-lg">
+        <XCircle className="h-16 w-16 text-red-400 mx-auto mb-4" />
+        <p className="text-blue-200 text-lg">Acesso negado</p>
+        <p className="text-blue-300 text-sm">Apenas administradores podem visualizar solicitações.</p>
+      </div>
+    );
+  }
+
   const pendingRequests = accessRequests.filter(req => req.status === 'pending');
   const processedRequests = accessRequests.filter(req => req.status !== 'pending');
 
@@ -56,7 +75,7 @@ const AccessRequestsTable = () => {
 
   return (
     <div className="space-y-8">
-      {/* Solicitações Pendentes */}
+      {/* Pending Requests */}
       <div>
         <div className="flex items-center space-x-3 mb-6">
           <Clock className="h-6 w-6 text-orange-400" />
@@ -129,7 +148,7 @@ const AccessRequestsTable = () => {
         )}
       </div>
 
-      {/* Solicitações Processadas */}
+      {/* Processed Requests */}
       {processedRequests.length > 0 && (
         <div>
           <div className="flex items-center space-x-3 mb-6">

@@ -7,26 +7,35 @@ import { toast } from '@/hooks/use-toast';
 export const useAccessRequests = () => {
   const queryClient = useQueryClient();
 
-  // Query para buscar solicitações de acesso
+  // Query to fetch access requests using the fixed RPC function
   const { data: accessRequests = [], isLoading } = useQuery({
     queryKey: ['accessRequests'],
     queryFn: async (): Promise<AccessRequest[]> => {
-      const { data, error } = await supabase.rpc('get_access_requests');
+      try {
+        const { data, error } = await supabase.rpc('get_access_requests');
 
-      if (error) {
-        console.error('Erro ao buscar solicitações:', error);
-        throw error;
+        if (error) {
+          console.error('Erro ao buscar solicitações:', error);
+          // If error is about permissions, return empty array (user is not admin)
+          if (error.message?.includes('administradores')) {
+            return [];
+          }
+          throw error;
+        }
+
+        // Type cast to ensure status is correct type
+        return (data || []).map((item: any): AccessRequest => ({
+          ...item,
+          status: item.status as 'pending' | 'approved' | 'denied'
+        }));
+      } catch (error) {
+        console.error('Erro na query de access requests:', error);
+        return [];
       }
-
-      // Type cast para garantir que status seja do tipo correto
-      return (data || []).map((item: any): AccessRequest => ({
-        ...item,
-        status: item.status as 'pending' | 'approved' | 'denied'
-      }));
     }
   });
 
-  // Mutation para processar solicitação (aprovar/negar)
+  // Mutation to process access request (approve/deny)
   const processRequestMutation = useMutation({
     mutationFn: async ({ requestId, action, adminName }: { 
       requestId: string; 
@@ -62,7 +71,7 @@ export const useAccessRequests = () => {
     }
   });
 
-  // Mutation para criar solicitação de acesso
+  // Mutation to create access request
   const createAccessRequestMutation = useMutation({
     mutationFn: async ({ userId, email, name, reason }: {
       userId: string;

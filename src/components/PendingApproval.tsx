@@ -2,50 +2,62 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Clock, FileText, LogOut } from 'lucide-react';
+import { Clock, FileText, LogOut, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { AccessRequest } from '@/types/auth';
 
 const PendingApproval = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, refreshUserRole } = useAuth();
   const [userRequest, setUserRequest] = useState<AccessRequest | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchUserRequest = async () => {
+    if (!user?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('access_requests')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Erro ao buscar solicitação:', error);
+      } else if (data && data.length > 0) {
+        // Type cast to ensure status is correct type
+        setUserRequest({
+          ...data[0],
+          status: data[0].status as 'pending' | 'approved' | 'denied'
+        });
+      }
+    } catch (error) {
+      console.error('Erro inesperado:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchUserRequest = async () => {
-      if (!user?.id) return;
-
-      try {
-        const { data, error } = await supabase
-          .from('access_requests')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
-
-        if (error && error.code !== 'PGRST116') {
-          console.error('Erro ao buscar solicitação:', error);
-        } else if (data) {
-          // Type cast para garantir que status seja do tipo correto
-          setUserRequest({
-            ...data,
-            status: data.status as 'pending' | 'approved' | 'denied'
-          });
-        }
-      } catch (error) {
-        console.error('Erro inesperado:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUserRequest();
   }, [user?.id]);
 
   const handleLogout = async () => {
     await signOut();
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refreshUserRole();
+      await fetchUserRequest();
+    } catch (error) {
+      console.error('Erro ao atualizar:', error);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   if (loading) {
@@ -109,6 +121,22 @@ const PendingApproval = () => {
                     </div>
                   </div>
                 )}
+
+                {userRequest.status === 'approved' && (
+                  <div className="bg-green-900/50 border border-green-600 rounded-lg p-3">
+                    <p className="text-green-200 text-sm text-center">
+                      ✅ Sua solicitação foi aprovada! Faça logout e login novamente para acessar o sistema.
+                    </p>
+                  </div>
+                )}
+
+                {userRequest.status === 'denied' && (
+                  <div className="bg-red-900/50 border border-red-600 rounded-lg p-3">
+                    <p className="text-red-200 text-sm text-center">
+                      ❌ Sua solicitação foi negada. Entre em contato com um administrador para mais informações.
+                    </p>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="bg-slate-700/50 rounded-lg p-4">
@@ -132,7 +160,17 @@ const PendingApproval = () => {
             </div>
           </div>
 
-          <div className="pt-4 border-t border-blue-600/30">
+          <div className="pt-4 border-t border-blue-600/30 space-y-3">
+            <Button 
+              onClick={handleRefresh}
+              disabled={refreshing}
+              variant="outline"
+              className="w-full border-blue-400 text-blue-400 hover:bg-blue-400 hover:text-blue-900"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              {refreshing ? 'Atualizando...' : 'Verificar Status'}
+            </Button>
+            
             <Button 
               onClick={handleLogout}
               variant="outline"
