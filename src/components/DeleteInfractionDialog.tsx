@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertTriangle, Trash2, X } from 'lucide-react';
 import { SupabaseService } from '@/services/supabaseService';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DeleteInfractionDialogProps {
   infractionId: string;
@@ -28,8 +29,11 @@ const DeleteInfractionDialog: React.FC<DeleteInfractionDialogProps> = ({
   const checkDailyLimit = async () => {
     if (deletedBy.trim()) {
       try {
-        const count = await SupabaseService.getDailyDeletionCount(deletedBy.trim());
-        setDailyCount(count);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const count = await SupabaseService.getDailyDeletionCountByRole(user.id);
+          setDailyCount(count);
+        }
       } catch (error) {
         console.error('Erro ao verificar limite diário:', error);
       }
