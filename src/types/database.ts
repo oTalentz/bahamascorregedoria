@@ -15,6 +15,7 @@ export interface DatabaseInfraction {
   severity: string; // Aceita qualquer string do banco
   registered_by: string;
   created_at: string;
+  punishment?: string; // Campo adicional para punição aplicada
   // Relação com garrison
   garrisons?: Garrison;
 }
@@ -27,6 +28,7 @@ export interface CreateInfractionData {
   evidence: string;
   severity: 'Leve' | 'Média' | 'Grave'; // Mantém tipagem restrita para criação
   registered_by: string;
+  punishment?: string; // Campo opcional para punição aplicada
 }
 
 export interface InfractionDeletion {

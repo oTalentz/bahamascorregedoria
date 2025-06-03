@@ -12,7 +12,6 @@ import { useAccessRequests } from '@/hooks/useAccessRequests';
 import AccessRequestsTable from '@/components/AccessRequestsTable';
 import RemoveUserDialog from '@/components/RemoveUserDialog';
 import { Badge } from "@/components/ui/badge";
-import { toast } from "@/hooks/use-toast";
 
 const AdminPanel = () => {
   const { user, signOut } = useAuth();
@@ -100,6 +99,26 @@ const AdminPanel = () => {
 
   const pendingDeletionRequests = deletionRequests.filter(req => req.status === 'pending');
   const pendingAccessRequests = accessRequests.filter(req => req.status === 'pending');
+
+  // Verificar se o usuário atual é admin
+  const isCurrentUserAdmin = user?.role === 'admin';
+
+  if (!isCurrentUserAdmin) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-red-900 to-slate-800 flex items-center justify-center">
+        <Card className="bg-red-800/95 border-red-600/70 max-w-md">
+          <CardContent className="p-8 text-center">
+            <Shield className="h-16 w-16 text-red-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-2">Acesso Negado</h2>
+            <p className="text-red-200">Apenas administradores podem acessar este painel.</p>
+            <Button onClick={handleLogout} className="mt-4 bg-red-600 hover:bg-red-700">
+              Voltar ao Login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
@@ -312,12 +331,20 @@ const AdminPanel = () => {
             <Card className="bg-gradient-to-br from-blue-800/85 to-slate-800/85 border-blue-600/70 backdrop-blur-sm shadow-2xl">
               <CardHeader>
                 <CardTitle className="text-xl text-white">Gerenciamento de Usuários</CardTitle>
+                <p className="text-blue-200 text-sm">
+                  {users.length} usuários cadastrados. Clique em "Remover" para excluir um usuário do sistema.
+                </p>
               </CardHeader>
               <CardContent>
                 {usersLoading ? (
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-400 mx-auto mb-4"></div>
                     <p className="text-blue-200">Carregando usuários...</p>
+                  </div>
+                ) : users.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Users className="h-16 w-16 text-blue-400 mx-auto mb-4" />
+                    <p className="text-blue-200 text-lg">Nenhum usuário encontrado</p>
                   </div>
                 ) : (
                   <Table>
@@ -333,7 +360,7 @@ const AdminPanel = () => {
                     <TableBody>
                       {users.filter(u => u.id !== user?.id).map((userItem) => (
                         <TableRow key={userItem.id} className="border-blue-600/30 hover:bg-blue-700/30">
-                          <TableCell className="text-white">{userItem.name}</TableCell>
+                          <TableCell className="text-white font-medium">{userItem.name}</TableCell>
                           <TableCell className="text-blue-200">{userItem.email}</TableCell>
                           <TableCell>
                             <Badge 
@@ -356,7 +383,7 @@ const AdminPanel = () => {
                                 email: userItem.email
                               })}
                               disabled={userProcessing}
-                              className="bg-red-600 hover:bg-red-700"
+                              className="bg-red-600 hover:bg-red-700 text-white"
                             >
                               <UserX className="h-4 w-4 mr-1" />
                               Remover

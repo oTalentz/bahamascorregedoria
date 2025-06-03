@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { X, Shield, User, FileText, AlertTriangle, UserCheck } from 'lucide-react';
+import { X, Shield, User, FileText, AlertTriangle, UserCheck, Gavel } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +18,7 @@ interface InfractionFormProps {
     evidence: string;
     severity: 'Leve' | 'Média' | 'Grave';
     registeredBy: string;
+    punishment?: string;
   }) => void;
   onCancel: () => void;
 }
@@ -31,16 +32,29 @@ const InfractionForm: React.FC<InfractionFormProps> = ({ onSubmit, onCancel }) =
     punishmentType: '',
     evidence: '',
     severity: 'Leve' as 'Leve' | 'Média' | 'Grave',
-    registeredBy: ''
+    registeredBy: '',
+    punishment: ''
   });
 
   const punishmentTypes = [
     'Observação',
     'Aviso 1',
-    'Aviso 2',
+    'Aviso 2', 
     'Aviso 3',
     'Advertência',
     'Exoneração'
+  ];
+
+  const punishmentOptions = [
+    'Advertência Verbal',
+    'Advertência Escrita',
+    'Suspensão 1 Dia',
+    'Suspensão 3 Dias',
+    'Suspensão 7 Dias',
+    'Rebaixamento de Cargo',
+    'Transferência Compulsória',
+    'Demissão',
+    'Nenhuma Punição Aplicada'
   ];
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -54,7 +68,8 @@ const InfractionForm: React.FC<InfractionFormProps> = ({ onSubmit, onCancel }) =
         punishmentType: '',
         evidence: '',
         severity: 'Leve',
-        registeredBy: ''
+        registeredBy: '',
+        punishment: ''
       });
     }
   };
@@ -81,7 +96,7 @@ const InfractionForm: React.FC<InfractionFormProps> = ({ onSubmit, onCancel }) =
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Guarnição - agora dinâmica do banco */}
+          {/* Guarnição */}
           <div className="space-y-2">
             <Label htmlFor="garrison" className="text-blue-200 font-medium flex items-center space-x-2">
               <Shield className="h-4 w-4 text-amber-400" />
@@ -162,6 +177,26 @@ const InfractionForm: React.FC<InfractionFormProps> = ({ onSubmit, onCancel }) =
               {punishmentTypes.map(type => (
                 <SelectItem key={type} value={type} className="text-white hover:bg-blue-700/50">
                   {type}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Punição Aplicada */}
+        <div className="space-y-2">
+          <Label htmlFor="punishment" className="text-blue-200 font-medium flex items-center space-x-2">
+            <Gavel className="h-4 w-4 text-amber-400" />
+            <span>Punição Aplicada</span>
+          </Label>
+          <Select value={formData.punishment} onValueChange={(value) => setFormData({...formData, punishment: value})}>
+            <SelectTrigger className="bg-slate-700/50 border-blue-600/30 text-white focus:border-amber-400">
+              <SelectValue placeholder="Selecione a punição aplicada" />
+            </SelectTrigger>
+            <SelectContent className="bg-slate-800 border-blue-600/30">
+              {punishmentOptions.map(punishment => (
+                <SelectItem key={punishment} value={punishment} className="text-white hover:bg-blue-700/50">
+                  {punishment}
                 </SelectItem>
               ))}
             </SelectContent>

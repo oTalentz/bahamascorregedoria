@@ -1,4 +1,3 @@
-
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
@@ -86,20 +85,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log('🔔 Auth state change:', event, session?.user?.email);
         setSession(session);
         
         if (session?.user) {
           console.log('👤 Usuário logado, buscando role...');
-          const userData = await fetchUserRole(session.user);
-          setUser(userData);
+          // Use setTimeout to defer Supabase calls and prevent deadlock
+          setTimeout(() => {
+            fetchUserRole(session.user).then(userData => {
+              setUser(userData);
+              setLoading(false);
+            });
+          }, 0);
         } else {
           console.log('👤 Usuário deslogado');
           setUser(null);
+          setLoading(false);
         }
-        
-        setLoading(false);
       }
     );
 
