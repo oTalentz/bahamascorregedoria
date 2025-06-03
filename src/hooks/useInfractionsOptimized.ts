@@ -1,8 +1,8 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { AuditLog } from '@/types/database';
 
 export interface Infraction {
   id: string;
@@ -20,16 +20,6 @@ export interface Statistics {
   totalInfractions: number;
   graveInfractions: number;
   uniqueOfficers: number;
-}
-
-export interface AuditLog {
-  id: string;
-  action_type: string;
-  table_name: string;
-  record_id: string;
-  user_name: string;
-  details: any;
-  created_at: string;
 }
 
 export const useInfractionsOptimized = () => {
