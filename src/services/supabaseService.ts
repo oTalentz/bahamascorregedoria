@@ -90,27 +90,26 @@ export class SupabaseService {
     // Verificar limite diário
     const today = new Date().toISOString().split('T')[0];
     const { count } = await supabase
-      .from('infraction_deletions')
-      .select('*', { count: 'exact', head: true })
-      .eq('deleted_by', deletedBy)
-      .gte('deleted_at', `${today}T00:00:00.000Z`)
-      .lt('deleted_at', `${today}T23:59:59.999Z`);
+      .rpc('get_daily_deletion_count', { 
+        deleted_by_param: deletedBy, 
+        date_param: today 
+      });
 
     if (count && count >= 3) {
       throw new Error('Limite diário de 3 remoções atingido');
     }
 
-    // Criar registro de remoção
+    // Criar registro de remoção usando SQL direto
     const { error: deletionError } = await supabase
-      .from('infraction_deletions')
-      .insert([{
-        infraction_id: infractionId,
-        deleted_by: deletedBy,
-        deletion_reason: reason,
-        original_data: originalData
-      }]);
+      .rpc('create_infraction_deletion', {
+        infraction_id_param: infractionId,
+        deleted_by_param: deletedBy,
+        deletion_reason_param: reason,
+        original_data_param: originalData
+      });
 
     if (deletionError) {
+      console.error('Erro ao criar registro de remoção:', deletionError);
       throw deletionError;
     }
 
@@ -121,6 +120,7 @@ export class SupabaseService {
       .eq('id', infractionId);
 
     if (removeError) {
+      console.error('Erro ao remover infração:', removeError);
       throw removeError;
     }
 
@@ -131,17 +131,23 @@ export class SupabaseService {
       officer_name: originalData.officer_name,
       reason: reason
     });
+
+    console.log('Infração removida com sucesso:', infractionId);
   }
 
   // Verificar quantas remoções foram feitas hoje por um usuário
   static async getDailyDeletionCount(deletedBy: string): Promise<number> {
     const today = new Date().toISOString().split('T')[0];
-    const { count } = await supabase
-      .from('infraction_deletions')
-      .select('*', { count: 'exact', head: true })
-      .eq('deleted_by', deletedBy)
-      .gte('deleted_at', `${today}T00:00:00.000Z`)
-      .lt('deleted_at', `${today}T23:59:59.999Z`);
+    const { count, error } = await supabase
+      .rpc('get_daily_deletion_count', { 
+        deleted_by_param: deletedBy, 
+        date_param: today 
+      });
+
+    if (error) {
+      console.error('Erro ao buscar contagem de remoções:', error);
+      return 0;
+    }
 
     return count || 0;
   }
@@ -163,33 +169,40 @@ export class SupabaseService {
 
   // Buscar logs de auditoria
   static async getAuditLogs(): Promise<AuditLog[]> {
-    const { data, error } = await supabase
-      .from('audit_logs')
-      .select('*')
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .rpc('get_audit_logs');
 
-    if (error) {
-      console.error('Erro ao buscar logs:', error);
-      throw error;
+      if (error) {
+        console.error('Erro ao buscar logs:', error);
+        // Retornar array vazio se houver erro, não falhar
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Erro na função getAuditLogs:', error);
+      return [];
     }
-
-    return data || [];
   }
 
   // Criar log de auditoria
   static async createAuditLog(actionType: 'CREATE' | 'DELETE', tableName: string, recordId: string, userName: string, details: any): Promise<void> {
-    const { error } = await supabase
-      .from('audit_logs')
-      .insert([{
-        action_type: actionType,
-        table_name: tableName,
-        record_id: recordId,
-        user_name: userName,
-        details: details
-      }]);
+    try {
+      const { error } = await supabase
+        .rpc('create_audit_log', {
+          action_type_param: actionType,
+          table_name_param: tableName,
+          record_id_param: recordId,
+          user_name_param: userName,
+          details_param: details
+        });
 
-    if (error) {
-      console.error('Erro ao criar log de auditoria:', error);
+      if (error) {
+        console.error('Erro ao criar log de auditoria:', error);
+      }
+    } catch (error) {
+      console.error('Erro na função createAuditLog:', error);
     }
   }
 

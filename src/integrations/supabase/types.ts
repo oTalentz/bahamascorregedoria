@@ -9,6 +9,36 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action_type: string
+          created_at: string
+          details: Json | null
+          id: string
+          record_id: string
+          table_name: string
+          user_name: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          record_id: string
+          table_name: string
+          user_name: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          record_id?: string
+          table_name?: string
+          user_name?: string
+        }
+        Relationships: []
+      }
       garrisons: {
         Row: {
           created_at: string | null
@@ -27,6 +57,33 @@ export type Database = {
           description?: string | null
           id?: number
           name?: string
+        }
+        Relationships: []
+      }
+      infraction_deletions: {
+        Row: {
+          deleted_at: string
+          deleted_by: string
+          deletion_reason: string
+          id: string
+          infraction_id: string
+          original_data: Json
+        }
+        Insert: {
+          deleted_at?: string
+          deleted_by: string
+          deletion_reason: string
+          id?: string
+          infraction_id: string
+          original_data: Json
+        }
+        Update: {
+          deleted_at?: string
+          deleted_by?: string
+          deletion_reason?: string
+          id?: string
+          infraction_id?: string
+          original_data?: Json
         }
         Relationships: []
       }
