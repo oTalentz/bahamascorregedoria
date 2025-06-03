@@ -1,10 +1,11 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { SupabaseService } from '@/services/supabaseService';
 import { DatabaseInfraction, CreateInfractionData, Garrison } from '@/types/database';
 import { Infraction } from '@/pages/Index';
 import { toast } from '@/hooks/use-toast';
 import { useEffect } from 'react';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/useAuth';
 
 // Função helper para validar severidade
 const validateSeverity = (severity: string): 'Leve' | 'Média' | 'Grave' => {

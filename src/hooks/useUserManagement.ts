@@ -37,15 +37,17 @@ export const useUserManagement = () => {
         throw authError;
       }
 
-      // Combinar dados
+      // Combinar dados com tipagem correta
       const usersWithRoles: UserWithRole[] = authUsers
         .map(authUser => {
           const roleData = rolesData?.find(r => r.user_id === authUser.id);
+          const userRole = roleData?.role as 'admin' | 'member' || 'member';
+          
           return {
             id: authUser.id,
             email: authUser.email!,
             name: authUser.user_metadata?.name || authUser.email,
-            role: roleData?.role || 'member',
+            role: userRole,
             created_at: roleData?.created_at || authUser.created_at
           };
         })

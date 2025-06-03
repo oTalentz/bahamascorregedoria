@@ -23,7 +23,21 @@ export const useDeletionRequests = () => {
         throw error;
       }
 
-      return data || [];
+      // Converter os dados do Supabase para o formato tipado correto
+      return (data || []).map(item => ({
+        id: item.id,
+        infraction_id: item.infraction_id,
+        requested_by_user_id: item.requested_by_user_id,
+        requested_by_name: item.requested_by_name,
+        deletion_reason: item.deletion_reason,
+        original_data: item.original_data,
+        status: item.status as 'pending' | 'approved' | 'denied' | 'processed',
+        processed_by_user_id: item.processed_by_user_id,
+        processed_by_name: item.processed_by_name,
+        processed_at: item.processed_at,
+        created_at: item.created_at,
+        expires_at: item.expires_at
+      }));
     },
     enabled: !!user
   });

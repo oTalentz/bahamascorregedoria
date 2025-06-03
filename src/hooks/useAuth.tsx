@@ -41,10 +41,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       .eq('user_id', supabaseUser.id)
       .single();
 
+    const userRole = roleData?.role as 'admin' | 'member' || 'member';
+
     return {
       id: supabaseUser.id,
       email: supabaseUser.email!,
-      role: roleData?.role || 'member',
+      role: userRole,
       name: supabaseUser.user_metadata?.name || supabaseUser.email
     };
   };
