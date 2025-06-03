@@ -136,6 +136,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_old_deletion_records: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          deleted_infractions: number
+          deleted_audit_logs: number
+          cleanup_timestamp: string
+        }[]
+      }
       create_audit_log: {
         Args: {
           action_type_param: string
@@ -165,6 +173,15 @@ export type Database = {
           user_name: string
           details: Json
           created_at: string
+        }[]
+      }
+      get_cleanup_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          total_deletion_records: number
+          records_pending_cleanup: number
+          next_cleanup_candidates: number
+          oldest_deletion_record: string
         }[]
       }
       get_daily_deletion_count: {

@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { SupabaseService } from '@/services/supabaseService';
 import { DatabaseInfraction, CreateInfractionData, Garrison } from '@/types/database';
@@ -45,6 +44,13 @@ export const useInfractions = () => {
   const { data: auditLogs = [] } = useQuery({
     queryKey: ['audit-logs'],
     queryFn: SupabaseService.getAuditLogs,
+  });
+
+  // Query para buscar estatísticas de limpeza
+  const { data: cleanupStats } = useQuery({
+    queryKey: ['cleanup-stats'],
+    queryFn: SupabaseService.getCleanupStats,
+    refetchInterval: 60000, // Atualiza a cada minuto
   });
 
   // Converter infrações do banco para formato do frontend
@@ -123,6 +129,35 @@ export const useInfractions = () => {
     }
   });
 
+  // Mutation para executar limpeza manual
+  const executeCleanupMutation = useMutation({
+    mutationFn: SupabaseService.executeCleanup,
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ['cleanup-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['audit-logs'] });
+        toast({
+          title: "Limpeza executada",
+          description: result.message,
+        });
+      } else {
+        toast({
+          title: "Erro na limpeza",
+          description: result.message,
+          variant: "destructive"
+        });
+      }
+    },
+    onError: (error) => {
+      console.error('Erro ao executar limpeza:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao executar limpeza. Tente novamente.",
+        variant: "destructive"
+      });
+    }
+  });
+
   // Função principal para adicionar infração
   const addInfraction = (infraction: Omit<Infraction, 'id' | 'date'>) => {
     createInfractionMutation.mutate(infraction);
@@ -160,6 +195,9 @@ export const useInfractions = () => {
     isSupabaseConfigured: true,
     statistics: statistics || { totalInfractions: 0, graveInfractions: 0, uniqueOfficers: 0 },
     garrisons,
-    auditLogs
+    auditLogs,
+    cleanupStats,
+    executeCleanup: () => executeCleanupMutation.mutate(),
+    isExecutingCleanup: executeCleanupMutation.isPending
   };
 };

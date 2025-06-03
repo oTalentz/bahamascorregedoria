@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { DatabaseInfraction, CreateInfractionData, Garrison, InfractionDeletion, AuditLog } from '@/types/database';
 
@@ -279,6 +278,47 @@ export class SupabaseService {
         totalInfractions: 0,
         graveInfractions: 0,
         uniqueOfficers: 0
+      };
+    }
+  }
+
+  // Buscar estatísticas de limpeza
+  static async getCleanupStats() {
+    try {
+      const { data, error } = await supabase.rpc('get_cleanup_stats');
+
+      if (error) {
+        console.error('Erro ao buscar estatísticas de limpeza:', error);
+        return null;
+      }
+
+      return data?.[0] || null;
+    } catch (error) {
+      console.error('Erro na função getCleanupStats:', error);
+      return null;
+    }
+  }
+
+  // Executar limpeza manual (para testes)
+  static async executeCleanup(): Promise<{ success: boolean; message: string; data?: any }> {
+    try {
+      const { data, error } = await supabase.functions.invoke('cleanup-old-records');
+
+      if (error) {
+        console.error('Erro ao executar limpeza:', error);
+        return { success: false, message: error.message };
+      }
+
+      return { 
+        success: true, 
+        message: 'Limpeza executada com sucesso', 
+        data 
+      };
+    } catch (error) {
+      console.error('Erro na função executeCleanup:', error);
+      return { 
+        success: false, 
+        message: error instanceof Error ? error.message : 'Erro desconhecido' 
       };
     }
   }

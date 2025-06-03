@@ -1,1 +1,5 @@
+
 project_id = "sruazvyuxgmpeduofpmt"
+
+[functions.cleanup-old-records]
+verify_jwt = false
