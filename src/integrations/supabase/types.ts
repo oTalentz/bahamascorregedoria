@@ -259,6 +259,10 @@ export type Database = {
           oldest_deletion_record: string
         }[]
       }
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_daily_deletion_count: {
         Args: { deleted_by_param: string; date_param: string }
         Returns: number
@@ -266,6 +270,10 @@ export type Database = {
       get_daily_deletion_count_by_role: {
         Args: { user_id_param: string; date_param: string }
         Returns: number
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
       }
       process_approved_deletion_request: {
         Args: { request_id_param: string }

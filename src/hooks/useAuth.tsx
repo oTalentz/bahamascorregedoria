@@ -39,20 +39,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     console.log('🔍 Buscando role para usuário:', supabaseUser.email, 'ID:', supabaseUser.id);
     
     try {
+      // Usar a função otimizada do banco de dados
       const { data: roleData, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', supabaseUser.id)
-        .single();
+        .rpc('get_current_user_role');
 
       if (error) {
         console.error('❌ Erro ao buscar role:', error);
         console.log('📝 Usando role padrão "member"');
       } else {
-        console.log('✅ Role encontrada:', roleData?.role);
+        console.log('✅ Role encontrada via RPC:', roleData);
       }
 
-      const userRole = roleData?.role as 'admin' | 'member' || 'member';
+      const userRole = (roleData as 'admin' | 'member') || 'member';
 
       const userData = {
         id: supabaseUser.id,
@@ -172,8 +170,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const updateUserRole = async (userId: string, role: 'admin' | 'member') => {
     const { error } = await supabase
       .from('user_roles')
-      .update({ role })
-      .eq('user_id', userId);
+      .upsert({ 
+        user_id: userId, 
+        role: role,
+        created_by: user?.name || 'admin'
+      });
 
     return { error };
   };
