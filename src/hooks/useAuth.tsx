@@ -13,6 +13,7 @@ interface AuthContextType {
   signOut: () => Promise<{ error: any }>;
   updateUserRole: (userId: string, role: 'admin' | 'member') => Promise<{ error: any }>;
   removeUser: (userId: string) => Promise<{ error: any }>;
+  refreshUserRole: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -35,32 +36,68 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true);
 
   const fetchUserRole = async (supabaseUser: SupabaseUser): Promise<User> => {
-    const { data: roleData, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', supabaseUser.id)
-      .single();
+    console.log('🔍 Buscando role para usuário:', supabaseUser.email, 'ID:', supabaseUser.id);
+    
+    try {
+      const { data: roleData, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', supabaseUser.id)
+        .single();
 
-    const userRole = roleData?.role as 'admin' | 'member' || 'member';
+      if (error) {
+        console.error('❌ Erro ao buscar role:', error);
+        console.log('📝 Usando role padrão "member"');
+      } else {
+        console.log('✅ Role encontrada:', roleData?.role);
+      }
 
-    return {
-      id: supabaseUser.id,
-      email: supabaseUser.email!,
-      role: userRole,
-      name: supabaseUser.user_metadata?.name || supabaseUser.email
-    };
+      const userRole = roleData?.role as 'admin' | 'member' || 'member';
+
+      const userData = {
+        id: supabaseUser.id,
+        email: supabaseUser.email!,
+        role: userRole,
+        name: supabaseUser.user_metadata?.name || supabaseUser.email
+      };
+
+      console.log('👤 Dados finais do usuário:', userData);
+      return userData;
+    } catch (err) {
+      console.error('💥 Erro inesperado ao buscar role:', err);
+      return {
+        id: supabaseUser.id,
+        email: supabaseUser.email!,
+        role: 'member',
+        name: supabaseUser.user_metadata?.name || supabaseUser.email
+      };
+    }
+  };
+
+  const refreshUserRole = async () => {
+    console.log('🔄 Fazendo refresh da role do usuário...');
+    if (session?.user) {
+      const userData = await fetchUserRole(session.user);
+      setUser(userData);
+      console.log('✅ Role atualizada com sucesso');
+    }
   };
 
   useEffect(() => {
+    console.log('🚀 Inicializando AuthProvider...');
+    
     // Configurar listener de mudanças de auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('🔔 Auth state change:', event, session?.user?.email);
         setSession(session);
         
         if (session?.user) {
+          console.log('👤 Usuário logado, buscando role...');
           const userData = await fetchUserRole(session.user);
           setUser(userData);
         } else {
+          console.log('👤 Usuário deslogado');
           setUser(null);
         }
         
@@ -70,9 +107,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     // Verificar sessão existente
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      console.log('🔍 Verificando sessão existente:', session?.user?.email);
       setSession(session);
       
       if (session?.user) {
+        console.log('👤 Sessão encontrada, buscando role...');
         const userData = await fetchUserRole(session.user);
         setUser(userData);
       }
@@ -84,10 +123,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    console.log('🔐 Tentativa de login:', email);
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password
     });
+    if (error) {
+      console.error('❌ Erro no login:', error);
+    }
     return { error };
   };
 
@@ -121,6 +164,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const signOut = async () => {
+    console.log('🚪 Fazendo logout...');
     const { error } = await supabase.auth.signOut();
     return { error };
   };
@@ -156,7 +200,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     signUp,
     signOut,
     updateUserRole,
-    removeUser
+    removeUser,
+    refreshUserRole
   };
 
   return (

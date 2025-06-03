@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { Search, Plus, Shield, AlertTriangle, FileText, Calendar, User, Users, Activity } from 'lucide-react';
+import { Search, Plus, Shield, AlertTriangle, FileText, Calendar, User, Users, Activity, RefreshCw } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,7 +39,7 @@ const Index = () => {
     auditLogs,
     userRole
   } = useInfractions();
-  const { user, signOut } = useAuth();
+  const { user, signOut, refreshUserRole } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('infractions');
@@ -55,6 +56,14 @@ const Index = () => {
 
   const handleLogout = async () => {
     await signOut();
+  };
+
+  const handleRefreshRole = async () => {
+    await refreshUserRole();
+    toast({
+      title: "Role atualizada",
+      description: "As permissões do usuário foram recarregadas.",
+    });
   };
 
   // Filtrar infrações
@@ -138,10 +147,22 @@ const Index = () => {
                   <span className="block text-green-200 text-sm mt-1">
                     ✅ Conectado ao Supabase - {user?.name || user?.email} ({userRole === 'admin' ? 'Administrador' : 'Membro'})
                   </span>
+                  <span className="block text-blue-100 text-xs mt-1">
+                    DEBUG: Role atual = {userRole} | User ID = {user?.id}
+                  </span>
                 </p>
               </div>
             </div>
             <div className="flex space-x-4">
+              <Button 
+                onClick={handleRefreshRole}
+                variant="outline"
+                size="sm"
+                className="border-blue-400 text-blue-400 hover:bg-blue-400 hover:text-blue-900"
+              >
+                <RefreshCw className="h-4 w-4 mr-1" />
+                Atualizar Role
+              </Button>
               {userRole === 'admin' && (
                 <Button 
                   onClick={() => window.location.href = '/admin'}
