@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    console.log('Iniciando limpeza automática de registros antigos...');
+    console.log('Iniciando limpeza automática de registros antigos (24h)...');
 
     // Execute the cleanup function
     const { data, error } = await supabase.rpc('cleanup_old_deletion_records');
@@ -37,10 +37,11 @@ Deno.serve(async (req) => {
 
     const result = data[0] as CleanupResult;
     
-    console.log('Limpeza concluída:', {
+    console.log('Limpeza concluída (24h):', {
       infrações_excluídas: result.deleted_infractions,
       logs_excluídos: result.deleted_audit_logs,
-      timestamp: result.cleanup_timestamp
+      timestamp: result.cleanup_timestamp,
+      período_retenção: '24 horas'
     });
 
     // Get cleanup statistics for monitoring
@@ -49,15 +50,16 @@ Deno.serve(async (req) => {
     if (statsError) {
       console.warn('Erro ao obter estatísticas:', statsError);
     } else {
-      console.log('Estatísticas atuais:', stats[0]);
+      console.log('Estatísticas atuais (24h):', stats[0]);
     }
 
     const response = {
       success: true,
-      message: 'Limpeza automática executada com sucesso',
+      message: 'Limpeza automática executada com sucesso (24 horas)',
       deleted_infractions: result.deleted_infractions,
       deleted_audit_logs: result.deleted_audit_logs,
       cleanup_timestamp: result.cleanup_timestamp,
+      retention_period: '24 hours',
       statistics: stats?.[0] || null
     };
 
