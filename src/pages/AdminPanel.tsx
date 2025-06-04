@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Users, Shield, Activity, FileText, UserPlus, UserMinus, Settings, RefreshCw, Trash2, UserCheck } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,7 @@ const AdminPanel = () => {
   const { user, signOut } = useAuth();
   const { users, isLoading: usersLoading, removeUser, updateUserRole, isProcessing } = useUserManagement();
   const { accessRequests, processRequest, isProcessing: requestsProcessing } = useAccessRequests();
-  const { deletionRequests, processRequest: processDeletionRequest, isProcessing: deletionProcessing } = useDeletionRequests();
+  const { deletionRequests, approveDeletionRequest, denyDeletionRequest, isProcessing: deletionProcessing } = useDeletionRequests();
   const [activeTab, setActiveTab] = useState('users');
   const [removeDialog, setRemoveDialog] = useState<{ userId: string; userName: string; userEmail: string } | null>(null);
 
@@ -44,8 +43,12 @@ const AdminPanel = () => {
     processRequest({ requestId, action, processedByName: user?.name || user?.email || 'Admin' });
   };
 
-  const handleProcessDeletionRequest = (requestId: string, action: 'approved' | 'rejected') => {
-    processDeletionRequest({ requestId, action, processedByName: user?.name || user?.email || 'Admin' });
+  const handleProcessDeletionRequest = (requestId: string, action: 'approved' | 'denied') => {
+    if (action === 'approved') {
+      approveDeletionRequest(requestId);
+    } else {
+      denyDeletionRequest(requestId);
+    }
   };
 
   const pendingRequests = accessRequests.filter(req => req.status === 'pending');
@@ -296,11 +299,7 @@ const AdminPanel = () => {
           </TabsContent>
 
           <TabsContent value="access-requests" className="space-y-8">
-            <AccessRequestsTable
-              accessRequests={accessRequests}
-              onProcessRequest={handleProcessRequest}
-              isProcessing={requestsProcessing}
-            />
+            <AccessRequestsTable />
           </TabsContent>
 
           <TabsContent value="deletion-requests" className="space-y-8">
@@ -372,7 +371,7 @@ const AdminPanel = () => {
                             Aprovar Remoção
                           </Button>
                           <Button
-                            onClick={() => handleProcessDeletionRequest(request.id, 'rejected')}
+                            onClick={() => handleProcessDeletionRequest(request.id, 'denied')}
                             disabled={deletionProcessing}
                             variant="outline"
                             className="border-red-600 text-red-300 hover:bg-red-900/20"
@@ -392,6 +391,7 @@ const AdminPanel = () => {
         {/* Dialog de Remoção */}
         {removeDialog && (
           <RemoveUserDialog
+            isOpen={!!removeDialog}
             userName={removeDialog.userName}
             userEmail={removeDialog.userEmail}
             onClose={() => setRemoveDialog(null)}
