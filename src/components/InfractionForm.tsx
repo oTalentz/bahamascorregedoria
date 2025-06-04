@@ -24,19 +24,6 @@ interface InfractionFormProps {
   onCancel: () => void;
 }
 
-const PUNISHMENT_TYPES = [
-  'Advertência Verbal',
-  'Advertência Escrita',
-  'Repreensão',
-  'Suspensão de 1 dia',
-  'Suspensão de 3 dias',
-  'Suspensão de 7 dias',
-  'Suspensão de 15 dias',
-  'Suspensão de 30 dias',
-  'Demissão',
-  'Punição'
-];
-
 const InfractionForm: React.FC<InfractionFormProps> = ({ onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
     garrison: '',
@@ -171,18 +158,14 @@ const InfractionForm: React.FC<InfractionFormProps> = ({ onSubmit, onCancel }) =
             <Label htmlFor="punishmentType" className="text-blue-200 font-medium">
               Tipo de Punição
             </Label>
-            <Select value={formData.punishmentType} onValueChange={(value) => handleInputChange('punishmentType', value)}>
-              <SelectTrigger className="bg-slate-700/50 border-blue-600/30 text-white focus:border-amber-400">
-                <SelectValue placeholder="Selecione o tipo de punição" />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-blue-600/30 max-h-60">
-                {PUNISHMENT_TYPES.map((type) => (
-                  <SelectItem key={type} value={type} className="text-white hover:bg-blue-700/50">
-                    {type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Input
+              id="punishmentType"
+              value={formData.punishmentType}
+              onChange={(e) => handleInputChange('punishmentType', e.target.value)}
+              placeholder="Ex: Advertência verbal, Suspensão de 3 dias, etc."
+              className="bg-slate-700/50 border-blue-600/30 text-white placeholder-blue-300 focus:border-amber-400"
+              required
+            />
           </div>
 
           {/* Severidade */}
